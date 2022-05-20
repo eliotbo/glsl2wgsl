@@ -1,0 +1,1 @@
+Translates GLSL code to WGSL. GLSL parser forked from https://github.com/phaazon/glsl

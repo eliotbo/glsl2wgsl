@@ -1,0 +1,62 @@
+let e: vec2<f32> = vec2<f32>(3.);
+let b: f32 = 1.;
+norm(po: vec3<f32>) -> vec3<f32> {
+
+}
+norm2(wq: vec2<f32>) -> vec2<f32> {
+
+}
+norm(po: vec3<f32>) -> vec3<f32> {
+	let what: i32 = 3;
+	let a: i32 = 2;
+	return what;
+
+}
+let rd: vec4<f32> = vec4<f32>(0.);
+norm(po: vec3<f32>) -> () {
+	rd.x = rd.x * (2.+3.);
+
+}
+let rd: vec4<f32> = vec4<f32>(0.);
+norm(po: vec3<f32>) -> () {
+	rd.x = rd.x * (2.+3.);
+
+}
+main() -> () {
+	for (let i: i32 = 0; i<120; i = i + 1) {
+		a = 3;
+	
+	}
+}
+norm(po: vec3<f32>) -> () {
+	let r: f32 = 2.;
+	let e: f32 = 1.;
+
+}
+norm(po: vec3<f32>) -> () {
+	if (r.x>d.x) {
+		r = d;
+	}
+
+}
+norm(po: vec3<f32>) -> () {
+	if (r.x>d.x) {
+		r = d;
+	
+	} else {
+		r = 1.;
+		a = 55;
+	
+	}
+	col = col + (gl);
+
+}
+mainImage( fragColor: vec4<f32>,  fragCoord: vec2<f32>) -> () {
+
+}
+;
+
+[[group(?), binding(?)]]
+var<uniform> myLights: Light;
+const yaa: array<f32,1> = array<f32,1>(5.5);
+const yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
