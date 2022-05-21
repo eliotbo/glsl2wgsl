@@ -20,9 +20,14 @@ nom = { version = "6", default-features = false, features = ["std"] }
 shaderc = { version = "0.6", optional = true }
 wasm-bindgen = "0.2"
 
-[lib]
-crate-type = ["cdylib"]
+# uncomment if compiling for wasm
+# [lib]
+# crate-type = ["cdylib"]
 
-# [examples]
-# name = "ex"
-# path = "examples/ex.rs"
+[[example]]
+name = "ex"
+path = "examples/ex.rs"
+
+[[example]]
+name = "replace_let"
+path = "examples/replace_let.rs"

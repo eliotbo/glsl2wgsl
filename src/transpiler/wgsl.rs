@@ -1295,6 +1295,7 @@ where
 {
   
   // let _ = f.write_str(" ");
+  let _ = f.write_str("fn ");
   show_identifier(f, &fp.name);
 
   let _ = f.write_str("(");
@@ -1393,18 +1394,28 @@ where
     // }
   
 
-  if let Some(ref arr_spec) = d.array_specifier {
-    
-    show_array_spec_wgsl(f, arr_spec, &d.ty.ty.ty);
-  }  else {
-  // show_fully_specified_type(f, &d.ty);
-  show_type_specifier(f, &d.ty.ty);
-  }
+    if let Some(ref arr_spec) = d.array_specifier {
+      
+      show_array_spec_wgsl(f, arr_spec, &d.ty.ty.ty);
+    }  else {
+    // show_fully_specified_type(f, &d.ty);
+      show_type_specifier(f, &d.ty.ty);
+    }
 
   // if let Some(ref arr_spec) = d.array_specifier {
   //   let _ = f.write_str(">");
   // } 
-}
+  } else {
+    // Struct
+    if let Some(ref arr_spec) = d.array_specifier {
+      
+      show_array_spec_wgsl(f, arr_spec, &d.ty.ty.ty);
+    }  else {
+    // show_fully_specified_type(f, &d.ty);
+      show_type_specifier(f, &d.ty.ty);
+    }
+
+  }
 
   if let Some(ref initializer) = d.initializer {
     let _ = f.write_str(" = ");

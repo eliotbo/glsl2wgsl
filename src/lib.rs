@@ -6,10 +6,11 @@ use parser::Parse;
 #[cfg(test)]
 mod parse_tests;
 pub mod parser;
-mod parsers;
+pub mod parsers;
 pub mod syntax;
 pub mod transpiler;
 pub mod visitor;
+pub mod let2var;
 
 #[wasm_bindgen]
 extern {

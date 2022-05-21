@@ -2,6 +2,7 @@ use glsl2wgsl::parser::Parse;
 use glsl2wgsl::syntax;
 // use glsl::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
+use glsl2wgsl::let2var::let2var_parser;
 
 use std::fs;
 
@@ -110,6 +111,13 @@ const IF: &str =
 const IN_OUT: &str = "void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {}";
 
+const SIMPLE_STRUCT: &str =   
+"struct Light
+{
+float intensity;
+};
+";
+
 const STRUCT: &str =   
 "struct Light
 {
@@ -124,12 +132,13 @@ const ARRAY: &str =
 
 fn main() {
   let r = ALL;
-  // let r = ARRAY;
+  // let r = SIMPLE_STRUCT;
 
   let trans = syntax::TranslationUnit::parse(r).unwrap();
   let mut buf = String::new();
   
   show_translation_unit(&mut buf, &trans);
+  buf = let2var_parser(&buf).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   println!("{:?}", trans);

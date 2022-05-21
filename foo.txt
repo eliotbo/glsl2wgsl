@@ -1,45 +1,45 @@
-let e: vec2<f32> = vec2<f32>(3.);
-let b: f32 = 1.;
-norm(po: vec3<f32>) -> vec3<f32> {
+var e: vec2<f32> = vec2<f32>(3.);
+var b: f32 = 1.;
+fn norm(po: vec3<f32>) -> vec3<f32> {
 
 }
-norm2(wq: vec2<f32>) -> vec2<f32> {
+fn norm2(wq: vec2<f32>) -> vec2<f32> {
 
 }
-norm(po: vec3<f32>) -> vec3<f32> {
-	let what: i32 = 3;
-	let a: i32 = 2;
+fn norm(po: vec3<f32>) -> vec3<f32> {
+	var what: i32 = 3;
+	var a: i32 = 2;
 	return what;
 
 }
-let rd: vec4<f32> = vec4<f32>(0.);
-norm(po: vec3<f32>) -> () {
+var rd: vec4<f32> = vec4<f32>(0.);
+fn norm(po: vec3<f32>) -> () {
 	rd.x = rd.x * (2.+3.);
 
 }
-let rd: vec4<f32> = vec4<f32>(0.);
-norm(po: vec3<f32>) -> () {
+var rd: vec4<f32> = vec4<f32>(0.);
+fn norm(po: vec3<f32>) -> () {
 	rd.x = rd.x * (2.+3.);
 
 }
-main() -> () {
-	for (let i: i32 = 0; i<120; i = i + 1) {
+fn main() -> () {
+	for (var i: i32 = 0; i<120; i = i + 1) {
 		a = 3;
 	
 	}
 }
-norm(po: vec3<f32>) -> () {
-	let r: f32 = 2.;
-	let e: f32 = 1.;
+fn norm(po: vec3<f32>) -> () {
+	var r: f32 = 2.;
+	var e: f32 = 1.;
 
 }
-norm(po: vec3<f32>) -> () {
+fn norm(po: vec3<f32>) -> () {
 	if (r.x>d.x) {
 		r = d;
 	}
 
 }
-norm(po: vec3<f32>) -> () {
+fn norm(po: vec3<f32>) -> () {
 	if (r.x>d.x) {
 		r = d;
 	
@@ -51,10 +51,13 @@ norm(po: vec3<f32>) -> () {
 	col = col + (gl);
 
 }
-mainImage( fragColor: vec4<f32>,  fragCoord: vec2<f32>) -> () {
+fn mainImage( fragColor: vec4<f32>,  fragCoord: vec2<f32>) -> () {
 
 }
-;
+struct Light {
+	intensity: f32;
+	position: vec3<f32>;
+};
 
 [[group(?), binding(?)]]
 var<uniform> myLights: Light;
