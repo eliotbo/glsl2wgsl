@@ -12,6 +12,8 @@ pub mod transpiler;
 pub mod visitor;
 pub mod let2var;
 
+use let2var::let2var_parser;
+
 #[wasm_bindgen]
 extern {
     pub fn prompt(s: &str, o: &str) -> String;
@@ -29,6 +31,7 @@ pub fn do_parse(x: String) -> String {
     let mut buf = String::new();
     
     transpiler::wgsl::show_translation_unit(&mut buf, &trans);
+    buf = let2var_parser(&buf).unwrap().1;
     return buf
   }
 

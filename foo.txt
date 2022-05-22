@@ -1,5 +1,5 @@
-var e: vec2<f32> = vec2<f32>(3.);
-var b: f32 = 1.;
+let e: vec2<f32> = vec2<f32>(3.);
+let b: f32 = 1.;
 fn norm(po: vec3<f32>) -> vec3<f32> {
 
 }
@@ -7,17 +7,17 @@ fn norm2(wq: vec2<f32>) -> vec2<f32> {
 
 }
 fn norm(po: vec3<f32>) -> vec3<f32> {
-	var what: i32 = 3;
+	let what: i32 = 3;
 	var a: i32 = 2;
 	return what;
 
 }
-var rd: vec4<f32> = vec4<f32>(0.);
+let rd: vec4<f32> = vec4<f32>(0.);
 fn norm(po: vec3<f32>) -> () {
 	rd.x = rd.x * (2.+3.);
 
 }
-var rd: vec4<f32> = vec4<f32>(0.);
+let rd: vec4<f32> = vec4<f32>(0.);
 fn norm(po: vec3<f32>) -> () {
 	rd.x = rd.x * (2.+3.);
 
@@ -30,26 +30,24 @@ fn main() -> () {
 }
 fn norm(po: vec3<f32>) -> () {
 	var r: f32 = 2.;
-	var e: f32 = 1.;
+	let e: f32 = 1.;
 
 }
 fn norm(po: vec3<f32>) -> () {
 	if (r.x>d.x) {
 		r = d;
 	}
-
 }
+
 fn norm(po: vec3<f32>) -> () {
 	if (r.x>d.x) {
 		r = d;
-	
 	} else {
 		r = 1.;
 		a = 55;
 	
 	}
 	col = col + (gl);
-
 }
 fn mainImage( fragColor: vec4<f32>,  fragCoord: vec2<f32>) -> () {
 
