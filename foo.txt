@@ -1,63 +1,49 @@
-let e: vec2<f32> = vec2<f32>(3.);
-let b: f32 = 1.;
-fn norm(po: vec3<f32>) -> vec3<f32> {
+fn getRotZMat(a: f32) -> mat3x3<f32> {
+	return mat3x3<f32>(cos(a), -sin(a), 0., sin(a), cos(a), 0., 0., 0., 1.);
 
 }
-fn norm2(wq: vec2<f32>) -> vec2<f32> {
+var dstepf: f32 = 0.;
+fn map(p: vec3<f32>) -> f32 {
+	p.x = p.x + (sin(p.z*1.8));
+	p.y = p.y + (cos(p.z*0.2)*sin(p.x*0.8));
+	p = p * (getRotZMat(p.z*0.8+sin(p.x)+cos(p.y)));
+	p.xy = mod(p.xy, 0.3)-0.15;
+	dstepf = dstepf + (0.003);
+	return length(p.xy);
 
-}
-fn norm(po: vec3<f32>) -> vec3<f32> {
-	let what: i32 = 3;
-	var a: i32 = 2;
-	return what;
-
-}
-let rd: vec4<f32> = vec4<f32>(0.);
-fn norm(po: vec3<f32>) -> () {
-	rd.x = rd.x * (2.+3.);
-
-}
-let rd: vec4<f32> = vec4<f32>(0.);
-fn norm(po: vec3<f32>) -> () {
-	rd.x = rd.x * (2.+3.);
-
-}
-fn main() -> () {
-	for (var i: i32 = 0; i<120; i = i + 1) {
-		a = 3;
-	
-	}
-}
-fn norm(po: vec3<f32>) -> () {
-	var r: f32 = 2.;
-	let e: f32 = 1.;
-
-}
-fn norm(po: vec3<f32>) -> () {
-	if (r.x>d.x) {
-		r = d;
-	}
-}
-
-fn norm(po: vec3<f32>) -> () {
-	if (r.x>d.x) {
-		r = d;
-	} else {
-		r = 1.;
-		a = 55;
-	
-	}
-	col = col + (gl);
 }
 fn mainImage( fragColor: vec4<f32>,  fragCoord: vec2<f32>) -> () {
+	let uv: vec2<f32> = (fragCoord-iResolution.xy*0.5)/iResolution.y;
+	let rd: vec3<f32> = normalize(vec3<f32>(uv, (1.-dot(uv, uv)*0.5)*0.5));
+	let ro: vec3<f32> = vec3<f32>(0, 0, iTime*1.26);
+	var col: vec3<f32> = vec3<f32>(0);
+	let sp: vec3<f32>;
+	let cs: f32 = cos(iTime*0.375);
+	let si: f32 = sin(iTime*0.375);
+	rd.xz = mat2x2<f32>(cs, si, -si, cs)*rd.xz;
+	var t: f32 = 0.06;
+	var layers: f32 = 0.;
+	var d: f32 = 0.;
+	let aD: f32;
+	let thD: f32 = 0.02;
+	for (var i: f32 = 0.; i<250.; i = i + 1) {
+		if (layers>15.||col.x>1.||t>5.6) {
+			break;
+		}
+		sp = ro+rd*t;
+		d = map(sp);
+		aD = (thD-abs(d)*15./16.)/thD;
+		if (aD>0.) {
+
+				col = col + (aD*aD*(3.-2.*aD)/(1.+t*t*0.25)*0.2);
+				layers = layers + 1;
+			
+		}
+		t = t + (max(d*0.7, thD*1.5)*dstepf);
+	
+	}	col = max(col, 0.);
+	col = mix(col, vec3<f32>(min(col.x*1.5, 1.), pow(col.x, 2.5), pow(col.x, 12.)), dot(sin(rd.yzx*8.+sin(rd.zxy*8.)), vec3<f32>(0.1666))+0.4);
+	col = mix(col, vec3<f32>(col.x*col.x*0.85, col.x, col.x*col.x*0.3), dot(sin(rd.yzx*4.+sin(rd.zxy*4.)), vec3<f32>(0.1666))+0.25);
+	fragColor = vec4<f32>(clamp(col, 0., 1.), 1.);
 
 }
-struct Light {
-	intensity: f32;
-	position: vec3<f32>;
-};
-
-[[group(?), binding(?)]]
-var<uniform> myLights: Light;
-const yaa: array<f32,1> = array<f32,1>(5.5);
-const yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
