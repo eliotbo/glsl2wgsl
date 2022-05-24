@@ -18,8 +18,10 @@ use nom::multi::{fold_many0, many0, many1, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 use nom::{Err as NomErr, ParseTo};
 
-use self::nom_helpers::{blank_space, cnst, cnst_span, eol, many0_, str_till_eol};
-pub use self::nom_helpers::{ParserResult, Span};
+use self::nom_helpers::{
+    blank_space, blank_space_span, cnst, eol, many0_, many0__span, str_till_eol, str_till_eol_span,
+};
+pub use self::nom_helpers::{IResult2, ParserResult, Span};
 use crate::syntax;
 
 // Parse a keyword. A keyword is just a regular string that must be followed by punctuation.
@@ -41,6 +43,22 @@ pub fn comment(i: &str) -> ParserResult<&str> {
     )(i)
 }
 
+/// Parse a single comment.
+pub fn comment_span(i: Span) -> IResult2<Span> {
+    preceded(
+        char('/'),
+        alt((
+            preceded(char('/'), cut(str_till_eol_span)),
+            preceded(char('*'), cut(terminated(take_until("*/"), tag("*/")))),
+        )),
+    )(i)
+}
+
+/// Parse several comments.
+pub fn comments_span(i: Span) -> IResult2<Span> {
+    recognize(many0__span(terminated(comment_span, blank_space_span)))(i)
+}
+
 /// Parse several comments.
 pub fn comments(i: &str) -> ParserResult<&str> {
     recognize(many0_(terminated(comment, blank_space)))(i)
@@ -51,6 +69,13 @@ pub fn comments(i: &str) -> ParserResult<&str> {
 /// This parser also allows to break a line into two by finishing the line with a backslack ('\').
 fn blank(i: &str) -> ParserResult<()> {
     value((), preceded(blank_space, comments))(i)
+}
+
+/// In-between token parser (spaces and comments).
+///
+/// This parser also allows to break a line into two by finishing the line with a backslack ('\').
+fn blank_span(i: Span) -> IResult2<()> {
+    value((), preceded(blank_space_span, comments_span))(i)
 }
 
 #[inline]
@@ -1602,7 +1627,7 @@ pub fn function_definition(i: &str) -> ParserResult<syntax::FunctionDefinition> 
 }
 
 /// Parse an external declaration.
-pub fn external_declaration(i: &str) -> ParserResult<syntax::ExternalDeclaration> {
+pub fn external_declaration(i: Span) -> IResult2<syntax::ExternalDeclaration> {
     alt((
         map(preprocessor, syntax::ExternalDeclaration::Preprocessor),
         map(
@@ -1618,11 +1643,9 @@ pub fn external_declaration(i: &str) -> ParserResult<syntax::ExternalDeclaration
 }
 
 /// Parse a translation unit (entry point).
-pub fn translation_unit(i: &str) -> ParserResult<syntax::TranslationUnit> {
-    map(
-        many1(delimited(blank, external_declaration, blank)),
-        |eds| syntax::TranslationUnit(syntax::NonEmpty(eds)),
-    )(i)
+pub fn translation_unit(i: Span) -> IResult2<syntax::TranslationUnit> {
+    let parser = many1(delimited(blank_span, external_declaration, blank_span));
+    map(parser, |eds| syntax::TranslationUnit(syntax::NonEmpty(eds)))(i)
 }
 
 /// Parse a preprocessor directive.

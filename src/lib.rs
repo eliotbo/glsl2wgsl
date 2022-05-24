@@ -8,6 +8,7 @@ pub mod let2var;
 mod parse_tests;
 pub mod parser;
 pub mod parsers;
+pub mod parsers_span;
 
 pub mod syntax;
 pub mod transpiler;
