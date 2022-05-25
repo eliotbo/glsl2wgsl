@@ -12,7 +12,7 @@ use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until, take_while1};
 use nom::character::complete::{anychar, char, digit1, space0, space1};
 use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, map, not, opt, peek, recognize, value, verify};
+use nom::combinator::{all_consuming, cut, eof, map, not, opt, peek, recognize, value, verify};
 use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
 use nom::multi::{fold_many0, many0, many1, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
@@ -1714,7 +1714,12 @@ pub fn external_declaration(i: Span) -> IResult2<syntax::ExternalDeclaration> {
 
 /// Parse a translation unit (entry point).
 pub fn translation_unit(i: Span) -> IResult2<syntax::TranslationUnit> {
-    let parser = many1(delimited(blank_span, external_declaration, blank_span));
+    let parser = all_consuming(many1(delimited(
+        blank_span,
+        external_declaration,
+        blank_span,
+    )));
+    // let parser2 = parser(i).and_then(many1(blank_span));
     map(parser, |eds| syntax::TranslationUnit(syntax::NonEmpty(eds)))(i)
 }
 
