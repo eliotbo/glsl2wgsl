@@ -30,7 +30,19 @@ pub fn do_parse(x: String) -> String {
     let trans = syntax::TranslationUnit::parse(Span::new(&x));
     println!("{:?}", trans);
     match trans {
-        Err(err) => return format!("There is a syntax error in the input GLSL code: {:?}", err),
+        Err(err) => {
+            let span = err.span();
+            let fragment = *span.fragment();
+            // let offset = span.location_offset();
+            // let problematic_code_to_end = &fragment[offset..];
+            let buggy_line = if let Some(line) = fragment.lines().next() {
+                line
+            } else {
+                "Error within error: there is no line to be checked."
+            };
+            format!("There is a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line: {}", 
+                span.location_line(), span.get_column(), buggy_line)
+        }
         Ok(w) => {
             let mut buf = String::new();
 

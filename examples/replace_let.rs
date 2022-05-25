@@ -25,7 +25,7 @@ void mainImage ( )
 void a()  {
 
 }
- let a = 3;
+ let a a = 3;
  // regards
 ";
 
