@@ -5,14 +5,14 @@ use glsl2wgsl::do_parse;
 use glsl2wgsl::let2var::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 
-use glsl2wgsl::parsers::nom_helpers::{blank_space2, Span};
+use glsl2wgsl::parsers_span::nom_helpers::Span;
 
 use nom::combinator::peek;
 
 use std::fs;
 
 const TEST1: &str = "
-float yu a = 1;
+float yu = 1;
 float sa = 1;
 ";
 
@@ -64,8 +64,9 @@ float sa = 1;
 // ";
 
 fn main() {
-    // println!("{}", do_parse(TEST1.to_owned()));
-    println!("{:?}", blank_space2(Span::new(TEST1)));
+    println!("{:?}", do_parse(TEST1.to_string()));
+
+    // println!("{:?}", blank_space_span(Span::new(TEST1)));
 
     // println!("{:?}", read_type(": type = 12;"));
     // println!("{:?}", read_type(" = 12;"));

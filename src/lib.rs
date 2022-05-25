@@ -7,13 +7,14 @@ pub mod let2var;
 #[cfg(test)]
 mod parse_tests;
 pub mod parser;
-pub mod parsers;
+// pub mod parsers;
 pub mod parsers_span;
 
 pub mod syntax;
 pub mod transpiler;
 
 use let2var::let2var_parser;
+use parsers_span::Span;
 
 #[wasm_bindgen]
 extern "C" {
@@ -26,7 +27,7 @@ pub fn greet(v: &str) {}
 
 #[wasm_bindgen]
 pub fn do_parse(x: String) -> String {
-    let trans = syntax::TranslationUnit::parse(&x);
+    let trans = syntax::TranslationUnit::parse(Span::new(&x));
     println!("{:?}", trans);
     match trans {
         Err(err) => return format!("There is a syntax error in the input GLSL code: {:?}", err),

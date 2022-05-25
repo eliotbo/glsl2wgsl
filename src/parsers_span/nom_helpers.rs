@@ -1,9 +1,10 @@
 //! Various nom parser helpers.
 
 use nom::branch::{alt, Alt};
-use nom::bytes::complete::{tag, take_until};
-use nom::character::complete::{anychar, line_ending, multispace1};
-use nom::combinator::{map, recognize, value};
+use nom::bytes::complete::{tag, take_until, take_while1};
+use nom::character::complete::{anychar, char, digit1, line_ending, multispace1};
+// use nom::combinator::{map, recognize, value, verify};
+use nom::combinator::{cut, map, not, opt, peek, recognize, value, verify};
 // use nom::error::{ErrorKind, ParseError, VerboseError, VerboseErrorKind};
 use nom::error::{ErrorKind, VerboseError, VerboseErrorKind};
 use nom::multi::fold_many0;
@@ -12,7 +13,7 @@ use nom::{Err as NomErr, IResult};
 use nom::{
     character::complete::{alpha1, alphanumeric1},
     multi::many0,
-    sequence::pair,
+    sequence::{delimited, pair},
 };
 
 use nom_locate::{position, LocatedSpan};
@@ -278,4 +279,27 @@ pub fn blank_space(i: &str) -> ParserResult<&str> {
 
 pub fn blank_space_span(i: Span) -> IResult2<Span> {
     recognize(many0__span(alt((multispace1, tag("\\\n")))))(i)
+}
+
+/// Parse a path literal with double quotes.
+pub fn path_lit_relative(i: Span) -> IResult2<Span> {
+    map(
+        delimited(char('"'), cut(take_until("\"")), cut(char('"'))),
+        |s: Span| s,
+    )(i)
+}
+
+#[inline]
+fn identifier_pred(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_'
+}
+
+#[inline]
+fn verify_identifier(s: &Span) -> bool {
+    !char::from(s.fragment().as_bytes()[0]).is_digit(10)
+}
+
+/// Parse an identifier (raw version).
+fn identifier_str(i: Span) -> IResult2<Span> {
+    verify(take_while1(identifier_pred), verify_identifier)(i)
 }

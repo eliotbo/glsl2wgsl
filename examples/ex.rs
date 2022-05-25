@@ -1,4 +1,6 @@
+// use glsl2wgsl::parser::Parse;
 use glsl2wgsl::parser::Parse;
+use glsl2wgsl::parsers_span::nom_helpers::Span;
 use glsl2wgsl::syntax;
 // use glsl::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
@@ -181,7 +183,7 @@ fn main() {
   let r = TEST1;
   // let r = SIMPLE_STRUCT;
 
-  let trans = syntax::TranslationUnit::parse(r).unwrap();
+  let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();
   
   show_translation_unit(&mut buf, &trans);
@@ -202,7 +204,7 @@ fn main() {
 }
 
 fn do_parse(x: &str) -> String {
-  let trans = syntax::TranslationUnit::parse(x).unwrap();
+  let trans = syntax::TranslationUnit::parse(Span::new(x)).unwrap();
   let mut buf = String::new();
   
   show_translation_unit(&mut buf, &trans);
