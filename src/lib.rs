@@ -35,26 +35,34 @@ pub fn do_parse(x: String) -> String {
             let fragment = *span.fragment();
             // let offset = span.location_offset();
             // let problematic_code_to_end = &fragment[offset..];
-            let buggy_line = if let Some(line) = fragment.lines().next() {
+
+            /////////////// begin formatting error message //////////////////////////////////////
+            let mut buggy_line = if let Some(line) = fragment.lines().next() {
                 line
             } else {
                 "Error within error: there is no line to be checked."
-            };
-            let err_long_str =
-            format!("There is a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line: {}", 
-                span.location_line(), span.get_column(), buggy_line);
+            }
+            .to_string();
+            // let err_long_str =
+            // format!("There seems to be a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line: {}",
+            //     span.location_line(), span.get_column(), buggy_line);
 
             let mut count = 0;
             let mut s = "".to_string();
-            for c in err_long_str.chars() {
+            for c in buggy_line.chars() {
                 count += 1;
-                if count > 60 && c == ' ' {
-                    s.push('\n');
+                if count > 50 && c == ' ' {
+                    s.push_str("\n\t");
                     count = 0;
                 }
                 s.push(c);
             }
-            s
+            let mut intro = format!("There seems to be a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line:",
+            span.location_line(), span.get_column(), ).to_string();
+            intro.push_str(&s);
+            /////////////// end formatting error message //////////////////////////////////////
+
+            intro
         }
         Ok(w) => {
             let mut buf = String::new();

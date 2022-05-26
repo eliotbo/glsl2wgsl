@@ -17,7 +17,8 @@ use std::fs;
 // ";
 
 const TEST1: &str = "
-float a = 1;
+vec2 a = vec2(1,1);
+afdsf kldsgjdsflkj fdslkklsjg fdkl dfjgklfs;gjfds gfdjg fdjgksdflj gslkfdjgdkl gfdlkjg dflkgjdf glfdjk
 ";
 
 fn main() {

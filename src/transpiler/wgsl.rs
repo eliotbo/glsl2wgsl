@@ -1507,6 +1507,22 @@ pub fn show_single_declaration_no_type<F>(
     }
 }
 
+pub fn convert_to_float(e: syntax::Expr, ty: &TypeSpecifierNonArray) -> syntax::Expr {
+    let new_exp = match e {
+        syntax::Expr::IntConst(ref x) if is_float(ty) => syntax::Expr::FloatConst(*x as f32),
+        syntax::Expr::UIntConst(ref x) if is_float(ty) => syntax::Expr::FloatConst(*x as f32),
+        syntax::Expr::FunCall(identifier, x) if is_float(ty) => syntax::Expr::FunCall(
+            identifier,
+            x.iter()
+                .map(|inner_e| convert_to_float(inner_e.clone(), ty))
+                .collect(),
+        ),
+
+        x => x.clone(),
+    };
+    new_exp
+}
+
 pub fn show_initializer<F>(f: &mut F, i: &syntax::Initializer, ty: &TypeSpecifierNonArray)
 // is_float: bool)
 where
@@ -1518,15 +1534,7 @@ where
             // WGLSL complains when a value doesn't match its declared type, so here we have
             // to convert integer values to float when the declared type contains a float.
             // if is_float(ty) {
-            let new_exp = match &**e {
-                syntax::Expr::IntConst(ref x) if is_float(ty) => {
-                    syntax::Expr::FloatConst(*x as f32)
-                }
-                syntax::Expr::UIntConst(ref x) if is_float(ty) => {
-                    syntax::Expr::FloatConst(*x as f32)
-                }
-                x => x.clone(),
-            };
+            let new_exp = convert_to_float(*e.clone(), ty);
             show_expr(f, &new_exp);
         }
 
