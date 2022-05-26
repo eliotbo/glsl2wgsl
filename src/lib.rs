@@ -40,8 +40,21 @@ pub fn do_parse(x: String) -> String {
             } else {
                 "Error within error: there is no line to be checked."
             };
+            let err_long_str =
             format!("There is a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line: {}", 
-                span.location_line(), span.get_column(), buggy_line)
+                span.location_line(), span.get_column(), buggy_line);
+
+            let mut count = 0;
+            let mut s = "".to_string();
+            for c in err_long_str.chars() {
+                count += 1;
+                if count > 60 && c == ' ' {
+                    s.push('\n');
+                    count = 0;
+                }
+                s.push(c);
+            }
+            s
         }
         Ok(w) => {
             let mut buf = String::new();

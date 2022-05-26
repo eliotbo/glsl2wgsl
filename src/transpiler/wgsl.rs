@@ -474,6 +474,66 @@ where
     }
 }
 
+use syntax::TypeSpecifierNonArray;
+pub fn is_float(ty: &TypeSpecifierNonArray) -> bool {
+    match ty {
+        TypeSpecifierNonArray::Float
+        | TypeSpecifierNonArray::Double
+        | TypeSpecifierNonArray::Vec2
+        | TypeSpecifierNonArray::Vec3
+        | TypeSpecifierNonArray::Vec4
+        | TypeSpecifierNonArray::DVec2
+        | TypeSpecifierNonArray::DVec3
+        | TypeSpecifierNonArray::DVec4
+        | TypeSpecifierNonArray::Mat2
+        | TypeSpecifierNonArray::Mat3
+        | TypeSpecifierNonArray::Mat4
+        | TypeSpecifierNonArray::Mat23
+        | TypeSpecifierNonArray::Mat24
+        | TypeSpecifierNonArray::Mat32
+        | TypeSpecifierNonArray::Mat34
+        | TypeSpecifierNonArray::Mat42
+        | TypeSpecifierNonArray::Mat43
+        | TypeSpecifierNonArray::DMat2
+        | TypeSpecifierNonArray::DMat3
+        | TypeSpecifierNonArray::DMat4
+        | TypeSpecifierNonArray::DMat23
+        | TypeSpecifierNonArray::DMat24
+        | TypeSpecifierNonArray::DMat32
+        | TypeSpecifierNonArray::DMat34
+        | TypeSpecifierNonArray::DMat42
+        | TypeSpecifierNonArray::DMat43 => true,
+        _ => false,
+    }
+}
+
+// isFloat :: TypeSpecifierNonArray -> Bool
+// isFloat Vec2 = True
+// isFloat Vec3 = True
+// isFloat Vec4 = True
+// isFloat BVec2 = True
+// isFloat BVec3 = True
+// isFloat BVec4 = True
+// isFloat IVec2 = True
+// isFloat IVec3 = True
+// isFloat IVec4 = True
+// isFloat UVec2 = True
+// isFloat UVec3 = True
+// isFloat UVec4 = True
+// isFloat Mat2 = True
+// isFloat Mat3 = True
+// isFloat Mat4 = True
+// isFloat Mat2x2 = True
+// isFloat Mat2x3 = True
+// isFloat Mat2x4 = True
+// isFloat Mat3x2 = True
+// isFloat Mat3x3 = True
+// isFloat Mat3x4 = True
+// isFloat Mat4x2 = True
+// isFloat Mat4x3 = True
+// isFloat Mat4x4 = True
+// isFloat _ = False
+
 pub fn show_type_specifier<F>(f: &mut F, t: &syntax::TypeSpecifier)
 where
     F: Write,
@@ -1367,6 +1427,8 @@ where
 {
     indent(f, i);
     let mut nolet = false;
+    let ty = &d.ty.ty.ty;
+
     if let Some(ref qual) = d.ty.qualifier {
         show_type_qualifier(f, &qual);
         let _ = f.write_str(" ");
@@ -1385,7 +1447,7 @@ where
         // }
 
         if let Some(ref arr_spec) = d.array_specifier {
-            show_array_spec_wgsl(f, arr_spec, &d.ty.ty.ty);
+            show_array_spec_wgsl(f, arr_spec, ty);
         } else {
             // show_fully_specified_type(f, &d.ty);
             show_type_specifier(f, &d.ty.ty);
@@ -1397,7 +1459,7 @@ where
     } else {
         // Struct
         if let Some(ref arr_spec) = d.array_specifier {
-            show_array_spec_wgsl(f, arr_spec, &d.ty.ty.ty);
+            show_array_spec_wgsl(f, arr_spec, ty);
         } else {
             // show_fully_specified_type(f, &d.ty);
             show_type_specifier(f, &d.ty.ty);
@@ -1406,7 +1468,7 @@ where
 
     if let Some(ref initializer) = d.initializer {
         let _ = f.write_str(" = ");
-        show_initializer(f, initializer);
+        show_initializer(f, initializer, ty);
     }
 }
 
@@ -1436,29 +1498,48 @@ pub fn show_single_declaration_no_type<F>(
     let _ = f.write_str(": ");
 
     show_type_specifier(f, &t.ty);
+    let ty = &t.ty.ty;
+    let ty_is_float = is_float(ty);
 
     if let Some(ref initializer) = d.initializer {
         let _ = f.write_str(" = ");
-        show_initializer(f, initializer);
+        show_initializer(f, initializer, ty);
     }
 }
 
-pub fn show_initializer<F>(f: &mut F, i: &syntax::Initializer)
+pub fn show_initializer<F>(f: &mut F, i: &syntax::Initializer, ty: &TypeSpecifierNonArray)
+// is_float: bool)
 where
     F: Write,
 {
     match *i {
-        syntax::Initializer::Simple(ref e) => show_expr(f, e),
+        syntax::Initializer::Simple(ref e) => {
+            // In GLSL, one can write "float a = 1;" without running into a compile time error.
+            // WGLSL complains when a value doesn't match its declared type, so here we have
+            // to convert integer values to float when the declared type contains a float.
+            // if is_float(ty) {
+            let new_exp = match &**e {
+                syntax::Expr::IntConst(ref x) if is_float(ty) => {
+                    syntax::Expr::FloatConst(*x as f32)
+                }
+                syntax::Expr::UIntConst(ref x) if is_float(ty) => {
+                    syntax::Expr::FloatConst(*x as f32)
+                }
+                x => x.clone(),
+            };
+            show_expr(f, &new_exp);
+        }
+
         syntax::Initializer::List(ref list) => {
             let mut iter = list.0.iter();
             let first = iter.next().unwrap();
 
             let _ = f.write_str("{ ");
-            show_initializer(f, first);
+            show_initializer(f, first, ty);
 
             for ini in iter {
                 let _ = f.write_str(", ");
-                show_initializer(f, ini);
+                show_initializer(f, ini, ty);
             }
 
             let _ = f.write_str(" }");
@@ -1666,7 +1747,8 @@ where
             let _ = f.write_str(" ");
             show_identifier(f, name);
             let _ = f.write_str(" = ");
-            show_initializer(f, initializer);
+
+            show_initializer(f, initializer, &ty.ty.ty);
         }
     }
 }

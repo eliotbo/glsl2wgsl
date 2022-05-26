@@ -17,16 +17,7 @@ use std::fs;
 // ";
 
 const TEST1: &str = "
-void mainImage ( )
-{
-
-}
-
-void a()  {
-
-}
- let a a = 3;
- // regards
+float a = 1;
 ";
 
 fn main() {
