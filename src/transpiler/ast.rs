@@ -244,3 +244,28 @@ ty: FullySpecifiedType {
         array_specifier: Some(ArraySpecifier { 
             dimensions: NonEmpty([ExplicitlySized(IntConst(1))]) }), 
             initializer: Some(Simple(FunCall(Identifier(Identifier("f32")), [FloatConst(5.5)]))) }
+
+TranslationUnit(
+    NonEmpty([
+        Declaration(
+            InitDeclaratorList(
+                InitDeclaratorList { 
+                    head: SingleDeclaration { 
+                        ty: FullySpecifiedType { 
+                            qualifier: None, ty: TypeSpecifier { 
+                                ty: Vec2, array_specifier: None } 
+                            }, 
+                        name: Some(Identifier("a")), 
+                        array_specifier: None, 
+                        initializer: Some(Simple(
+                            Binary(
+                                Add, 
+                                FunCall(
+                                    Identifier(Identifier("vec2<f32>")), 
+                                    [IntConst(1), IntConst(1)]
+                                ), 
+                                FunCall(
+                                    Identifier(Identifier("vec2<f32>")), 
+                                    [IntConst(0), IntConst(0)])))) }, 
+                    tail: [] }))]))
+)

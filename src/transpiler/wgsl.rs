@@ -107,7 +107,9 @@ pub fn show_identifier<F>(f: &mut F, i: &syntax::Identifier)
 where
     F: Write,
 {
-    let _ = f.write_str(&convert_builtin_functions(&i.0));
+    let new_ident = convert_builtin_functions(&i.0).to_string();
+
+    let _ = f.write_str(&new_ident);
 }
 
 pub fn show_type_name<F>(f: &mut F, t: &syntax::TypeName)
@@ -503,6 +505,15 @@ pub fn is_float(ty: &TypeSpecifierNonArray) -> bool {
         | TypeSpecifierNonArray::DMat34
         | TypeSpecifierNonArray::DMat42
         | TypeSpecifierNonArray::DMat43 => true,
+        _ => false,
+    }
+}
+
+pub fn is_float_str(ty: &str) -> bool {
+    match ty {
+        "f32" | "vec2<f32>" | "vec3<f32>" | "vec4<f32>" | "mat2x2<f32>" | "mat3x3<f32>"
+        | "mat4x4<f32>" | "mat2x3<f32>" | "mat2x4<f32>" | "mat3x2<f32>" | "mat3x4<f32>"
+        | "mat4x2<f32>" | "mat4x3<f32>" => true,
         _ => false,
     }
 }
@@ -1048,18 +1059,43 @@ where
             show_array_spec_value_wgsl(f, &a, &e);
             // }
         }
+
+        // In GLSL, one can write "float a = 1;" without running into a compile time error.
+        // WGLSL complains when a value doesn't match its declared type, so here we have
+        // to convert integer values to floats when the declared type contains a float.
         syntax::Expr::FunCall(ref fun, ref args) => {
-            show_function_identifier(f, &fun);
+            let mut do_convert_to_float = false;
+            match *fun {
+                syntax::FunIdentifier::Identifier(ref n) => {
+                    do_convert_to_float = is_float_str(&n.0);
+                    show_identifier(f, &n)
+                }
+                syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e),
+            }
+
+            // show_function_identifier(f, &fun);
             let _ = f.write_str("(");
 
             if !args.is_empty() {
                 let mut args_iter = args.iter();
                 let first = args_iter.next().unwrap();
-                show_expr(f, first);
+
+                if do_convert_to_float {
+                    let new_first = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
+                    show_expr(f, &new_first);
+                } else {
+                    show_expr(f, &first);
+                }
 
                 for e in args_iter {
                     let _ = f.write_str(", ");
-                    show_expr(f, e);
+
+                    if do_convert_to_float {
+                        let new_e = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
+                        show_expr(f, &new_e);
+                    } else {
+                        show_expr(f, e);
+                    }
                 }
             }
 
@@ -1185,61 +1221,61 @@ where
 {
     match *op {
         syntax::BinaryOp::Or => {
-            let _ = f.write_str("||");
+            let _ = f.write_str(" || ");
         }
         syntax::BinaryOp::Xor => {
-            let _ = f.write_str("^^");
+            let _ = f.write_str(" ^^ ");
         }
         syntax::BinaryOp::And => {
-            let _ = f.write_str("&&");
+            let _ = f.write_str(" && ");
         }
         syntax::BinaryOp::BitOr => {
-            let _ = f.write_str("|");
+            let _ = f.write_str(" | ");
         }
         syntax::BinaryOp::BitXor => {
-            let _ = f.write_str("^");
+            let _ = f.write_str(" ^ ");
         }
         syntax::BinaryOp::BitAnd => {
-            let _ = f.write_str("&");
+            let _ = f.write_str(" & ");
         }
         syntax::BinaryOp::Equal => {
-            let _ = f.write_str("==");
+            let _ = f.write_str(" == ");
         }
         syntax::BinaryOp::NonEqual => {
-            let _ = f.write_str("!=");
+            let _ = f.write_str(" != ");
         }
         syntax::BinaryOp::LT => {
-            let _ = f.write_str("<");
+            let _ = f.write_str(" < ");
         }
         syntax::BinaryOp::GT => {
-            let _ = f.write_str(">");
+            let _ = f.write_str(" > ");
         }
         syntax::BinaryOp::LTE => {
-            let _ = f.write_str("<=");
+            let _ = f.write_str(" <= ");
         }
         syntax::BinaryOp::GTE => {
-            let _ = f.write_str(">=");
+            let _ = f.write_str(" >= ");
         }
         syntax::BinaryOp::LShift => {
-            let _ = f.write_str("<<");
+            let _ = f.write_str(" << ");
         }
         syntax::BinaryOp::RShift => {
-            let _ = f.write_str(">>");
+            let _ = f.write_str(" >> ");
         }
         syntax::BinaryOp::Add => {
-            let _ = f.write_str("+");
+            let _ = f.write_str(" + ");
         }
         syntax::BinaryOp::Sub => {
-            let _ = f.write_str("-");
+            let _ = f.write_str(" - ");
         }
         syntax::BinaryOp::Mult => {
-            let _ = f.write_str("*");
+            let _ = f.write_str(" * ");
         }
         syntax::BinaryOp::Div => {
-            let _ = f.write_str("/");
+            let _ = f.write_str(" / ");
         }
         syntax::BinaryOp::Mod => {
-            let _ = f.write_str("%");
+            let _ = f.write_str(" % ");
         }
     }
 }
@@ -1530,12 +1566,9 @@ where
 {
     match *i {
         syntax::Initializer::Simple(ref e) => {
-            // In GLSL, one can write "float a = 1;" without running into a compile time error.
-            // WGLSL complains when a value doesn't match its declared type, so here we have
-            // to convert integer values to float when the declared type contains a float.
             // if is_float(ty) {
-            let new_exp = convert_to_float(*e.clone(), ty);
-            show_expr(f, &new_exp);
+            // let new_exp = convert_to_float(*e.clone(), ty);
+            show_expr(f, &e);
         }
 
         syntax::Initializer::List(ref list) => {
@@ -1586,7 +1619,7 @@ where
     // let _ = f.write_str("{");
     show_compound_statement(f, &fd.statement, i);
     indent(f, i);
-    let _ = f.write_str("}");
+    let _ = f.write_str("} \n");
 }
 
 pub fn show_compound_statement<F>(f: &mut F, cst: &syntax::CompoundStatement, i: Indent)
@@ -1663,8 +1696,8 @@ where
 {
     match *sst {
         syntax::SelectionRestStatement::Statement(ref if_st) => {
-            let _ = f.write_str("\n");
-            show_statement(f, if_st, i + 1);
+            // let _ = f.write_str("\n");
+            show_statement(f, if_st, i);
             indent(f, i);
             let _ = f.write_str("}\n");
         }

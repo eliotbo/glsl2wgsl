@@ -179,9 +179,58 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 }
 ";
 
+const TWO_FN: &str = "
+void main() {}
+void main() {}
+";
+
+const COND: &str = "
+void main() {
+  if (w) {
+    if (w) {
+      return true;
+    }
+  } else {
+    return false;
+  }
+}";
+
+const PAINT: &str ="
+void mainImage( out vec4 U, in vec2 pos )
+{
+    if (u.y < 1.2)
+    {
+        for (float y = 0.; y > -3.; y--)
+          {
+            for (float x = -2.; x <3.; x++)
+            {
+                id = floor(u) + vec2(x,y);
+                lc = (fract(u) + vec2(1.-x,-y))/vec2(5,3);
+                h = (hash12(id)-.5)*.25+.5; //shade and length for an individual blade of grass
+
+                lc-= vec2(.3,.5-h*.4);
+                lc.x += sin(((iTime*1.7+h*2.-id.x*.05-id.y*.05)*1.1+id.y*.5)*2.)*(lc.y+.5)*.5;
+                t = abs(lc)-vec2(.02,.5-h*.5);
+                l =  length(max(t,0.)) + min(max(t.x,t.y),0.); //distance to the segment (blade of grass)
+
+                l -= noise (lc*7.+id)*.1; //add fine noise
+                C = vec4(f*.25,st(l,.1,sm*xd*.09)); //grass outline                
+                C = mix(C,vec4(f                  //grass foregroud
+                            *(1.2+lc.y*2.)  //the grass is a little darker at the root
+                            *(1.8-h*2.5),1.)    //brightness variations for individual blades of grass
+                            ,st(l,.04,sm*xd*.09));
+                
+                O = mix (O,C,C.a*step (id.y,-1.));
+                a = max (a, C.a*step (id.y,-5.));  //a mask to cover the trunk of the tree with grasses in the foreground
+            }
+        }
+    }
+}
+";
+
 fn main() {
-  let r = TEST1;
-  // let r = SIMPLE_STRUCT;
+  // let r = TEST1;
+  let r = PAINT;
 
   let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();

@@ -23,14 +23,14 @@ nom_locate = "4.0"
 
 # wasm-pack build --target web
 
-# uncomment if compiling for wasm
-[lib]
-crate-type = ["cdylib"]
+# # uncomment if compiling for wasm
+# [lib]
+# crate-type = ["cdylib"]
 
 # [[example]]
 # name = "ex"
 # path = "examples/ex.rs"
 
-# [[example]]
-# name = "replace_let"
-# path = "examples/replace_let.rs"
+[[example]]
+name = "replace_let"
+path = "examples/replace_let.rs"
