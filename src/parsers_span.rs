@@ -5,7 +5,7 @@
 //!
 //! Other parsers are exported if you want more control on how you want to parse your source.
 
-pub mod nom_helpers;
+// pub mod nom_helpers;
 
 use core::num::ParseIntError;
 use nom::branch::alt;
@@ -18,11 +18,11 @@ use nom::multi::{fold_many0, many0, many1, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 use nom::{Err as NomErr, ParseTo};
 
-use self::nom_helpers::{
+use crate::nom_helpers::{
     blank_space, blank_space_span, cnst, cnst_span, eol, eol_span, many0_, many0__span,
     str_till_eol, str_till_eol_span, ParseError,
 };
-pub use self::nom_helpers::{IResult2, Span};
+pub use crate::nom_helpers::{IResult2, Span};
 use crate::syntax;
 
 // Parse a keyword. A keyword is just a regular string that must be followed by punctuation.

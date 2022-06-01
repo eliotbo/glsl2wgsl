@@ -37,7 +37,7 @@
 // #![crate_type = "dylib"]
 
 // #![no_std]
-use crate::parsers_span::nom_helpers::Span;
+use crate::nom_helpers::Span;
 use crate::syntax;
 use core::fmt::Write;
 

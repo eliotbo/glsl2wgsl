@@ -15,7 +15,7 @@ use nom::error::convert_error;
 use nom::Err as NomErr;
 
 // use crate::parsers::ParserResult;
-use crate::parsers_span::nom_helpers::{IResult2, ParseError, Span};
+use crate::nom_helpers::{IResult2, ParseError, Span};
 // use crate::parsers_span::ParserResult;
 use crate::syntax;
 

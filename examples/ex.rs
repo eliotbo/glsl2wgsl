@@ -1,10 +1,11 @@
 // use glsl2wgsl::parser::Parse;
 use glsl2wgsl::parser::Parse;
-use glsl2wgsl::parsers_span::nom_helpers::Span;
+use glsl2wgsl::nom_helpers::Span;
 use glsl2wgsl::syntax;
 // use glsl::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 use glsl2wgsl::let2var::let2var_parser;
+use glsl2wgsl::replace_unis::uniform_vars_parser;
 
 use std::fs;
 
@@ -200,8 +201,10 @@ void mainImage( out vec4 U, in vec2 pos )
 {
     if (u.y < 1.2)
     {
+      float u = iRes;
         for (float y = 0.; y > -3.; y--)
           {
+            float u =  45;
             for (float x = -2.; x <3.; x++)
             {
                 id = floor(u) + vec2(x,y);
@@ -237,6 +240,7 @@ fn main() {
   
   show_translation_unit(&mut buf, &trans);
   buf = let2var_parser(&buf).unwrap().1;
+  buf = uniform_vars_parser(&buf).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   println!("{:?}", trans);

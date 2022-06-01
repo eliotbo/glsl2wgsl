@@ -1,12 +1,14 @@
 fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {
 	if (u.y < 1.2) {
+		let u: f32 = iRes;
 		for (var y: f32 = 0.; y > -3.; y = y - 1) {
+			let u: f32 = 45;
 			for (var x: f32 = -2.; x < 3.; x = x + 1) {
 				id = floor(u) + vec2<f32>(x, x);
 				lc = (fract(u) + vec2<f32>(1. - x, 1. - x)) / vec2<f32>(5., 5.);
 				h = (hash12(id) - 0.5) * 0.25 + 0.5;
 				lc = lc - (vec2<f32>(0.3, 0.3));
-				lc.x = lc.x + (sin(((iTime * 1.7 + h * 2. - id.x * 0.05 - id.y * 0.05) * 1.1 + id.y * 0.5) * 2.) * (lc.y + 0.5) * 0.5);
+				lc.x = lc.x + (sin(((uni.iTime * 1.7 + h * 2. - id.x * 0.05 - id.y * 0.05) * 1.1 + id.y * 0.5) * 2.) * (lc.y + 0.5) * 0.5);
 				t = abs(lc) - vec2<f32>(0.02, 0.02);
 				l = length(max(t, 0.)) + min(max(t.x, t.y), 0.);
 				l = l - (noise(lc * 7. + id) * 0.1);

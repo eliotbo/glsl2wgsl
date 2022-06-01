@@ -5,7 +5,7 @@ use glsl2wgsl::do_parse;
 use glsl2wgsl::let2var::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 
-use glsl2wgsl::parsers_span::nom_helpers::Span;
+use glsl2wgsl::nom_helpers::Span;
 
 use nom::combinator::peek;
 

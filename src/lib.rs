@@ -13,6 +13,11 @@ pub mod parsers_span;
 pub mod syntax;
 pub mod transpiler;
 
+pub mod nom_helpers;
+pub mod replace_unis;
+
+use replace_unis::*;
+
 use let2var::let2var_parser;
 use parsers_span::Span;
 
@@ -64,14 +69,17 @@ pub fn do_parse(x: String) -> String {
 
             intro
         }
+
         Ok(w) => {
             let mut buf = String::new();
 
             transpiler::wgsl::show_translation_unit(&mut buf, &w);
 
-            let wha = let2var_parser(&buf);
-            println!("{:?}", wha);
-            buf = wha.unwrap().1;
+            // the following parsers cannot fail, so we can use unwrap freely
+            let lets = let2var_parser(&buf).unwrap();
+            let unis = uniform_vars_parser(&lets.1).unwrap();
+            println!("{:?}", unis);
+            buf = unis.1;
 
             return buf;
         }
