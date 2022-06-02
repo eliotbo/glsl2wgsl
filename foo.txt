@@ -1,25 +1,26 @@
-fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {
-	if (u.y < 1.2) {
-		let u: f32 = iRes;
-		for (var y: f32 = 0.; y > -3.; y = y - 1) {
-			let u: f32 = 45;
-			for (var x: f32 = -2.; x < 3.; x = x + 1) {
-				id = floor(u) + vec2<f32>(x, x);
-				lc = (fract(u) + vec2<f32>(1. - x, 1. - x)) / vec2<f32>(5., 5.);
-				h = (hash12(id) - 0.5) * 0.25 + 0.5;
-				lc = lc - (vec2<f32>(0.3, 0.3));
-				lc.x = lc.x + (sin(((uni.iTime * 1.7 + h * 2. - id.x * 0.05 - id.y * 0.05) * 1.1 + id.y * 0.5) * 2.) * (lc.y + 0.5) * 0.5);
-				t = abs(lc) - vec2<f32>(0.02, 0.02);
-				l = length(max(t, 0.)) + min(max(t.x, t.y), 0.);
-				l = l - (noise(lc * 7. + id) * 0.1);
-				C = vec4<f32>(f * 0.25, f * 0.25);
-				C = mix(C, vec4<f32>(f * (1.2 + lc.y * 2.) * (1.8 - h * 2.5), f * (1.2 + lc.y * 2.) * (1.8 - h * 2.5)), st(l, 0.04, sm * xd * 0.09));
-				O = mix(O, C, C.a * step(id.y, -1.));
-				a = max(a, C.a * step(id.y, -5.));
-			
-			}		
-		}	
-	}
+#define Bf(p) p
 
-} 
+#define Bi(p) ivec2(p)
+
+#define texel(a, p) texelFetch(a, Bi(p), 0)
+
+#define pixel(a, p) texture(a, (p)/R)
+
+let ch0 = iChannel0;
+
+let ch1 = iChannel1;
+
+let ch2 = iChannel2;
+
+let ch3 = iChannel3;
+
+let PI = 3.14159265;
+
+#define loop(i, x) for(int i = 0; i < x; i++)
+
+#define range(i, a, b) for(int i = a; i <= b; i++)
+
+let dt = 1.5;
+
+let border_h = 5.;
 

@@ -12,9 +12,6 @@ use nom::combinator::peek;
 use std::fs;
 
 // TODO:
-// iResolution -> uni.iResolution
-// fix newlines and tabs
-// space around operators (- % +)
 
 const TEST1: &str = "
 void mainImage( out vec4 U, in vec2 pos )

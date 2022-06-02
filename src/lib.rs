@@ -14,8 +14,10 @@ pub mod syntax;
 pub mod transpiler;
 
 pub mod nom_helpers;
+pub mod replace_defines;
 pub mod replace_unis;
 
+use replace_defines::*;
 use replace_unis::*;
 
 use let2var::let2var_parser;
@@ -78,8 +80,9 @@ pub fn do_parse(x: String) -> String {
             // the following parsers cannot fail, so we can use unwrap freely
             let lets = let2var_parser(&buf).unwrap();
             let unis = uniform_vars_parser(&lets.1).unwrap();
-            println!("{:?}", unis);
-            buf = unis.1;
+            let defi = definition_parser(&unis.1).unwrap().1;
+            println!("{:?}", defi);
+            buf = defi;
 
             return buf;
         }

@@ -6,6 +6,7 @@ use glsl2wgsl::syntax;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 use glsl2wgsl::let2var::let2var_parser;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
+use glsl2wgsl::replace_defines::definition_parser;
 
 use std::fs;
 
@@ -231,9 +232,29 @@ void mainImage( out vec4 U, in vec2 pos )
 }
 ";
 
+const DEFINE: &str = "
+#define Bf(p) p
+#define Bi(p) ivec2(p)
+#define texel(a, p) texelFetch(a, Bi(p), 0)
+#define pixel(a, p) texture(a, (p)/R)
+#define ch0 iChannel0
+#define ch1 iChannel1
+#define ch2 iChannel2
+#define ch3 iChannel3
+
+#define PI 3.14159265
+
+#define loop(i,x) for(int i = 0; i < x; i++)
+#define range(i,a,b) for(int i = a; i <= b; i++)
+
+#define dt 1.5
+
+#define border_h 5.
+";
+
 fn main() {
   // let r = TEST1;
-  let r = PAINT;
+  let r = DEFINE;
 
   let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();
@@ -241,6 +262,7 @@ fn main() {
   show_translation_unit(&mut buf, &trans);
   buf = let2var_parser(&buf).unwrap().1;
   buf = uniform_vars_parser(&buf).unwrap().1;
+  buf = definition_parser(&buf).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   println!("{:?}", trans);
