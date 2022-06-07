@@ -40,6 +40,7 @@
 use crate::nom_helpers::Span;
 use crate::syntax;
 use core::fmt::Write;
+use itertools::Itertools;
 
 // Precedence information for transpiling parentheses properly
 trait HasPrecedence {
@@ -59,7 +60,7 @@ impl HasPrecedence for syntax::Expr {
             // Precedence operator expression is precedence of operator
             Self::Unary(op, _) => op.precedence(),
             Self::Binary(op, _, _) => op.precedence(),
-            Self::Ternary(_, _, _) => 15,
+            Self::Ternary(_, _, _) | Self::TernaryWGSL(_, _, _, _) => 15,
             Self::Assignment(_, op, _) => op.precedence(),
             Self::Bracket(_, _)
             | Self::FunCall(_, _)
@@ -920,6 +921,24 @@ where
     }
 }
 
+pub fn is_instance_of_swizzle(s: &str, inst: &str, num: usize) -> bool {
+    inst.chars()
+        .permutations(num)
+        .any(|p| p.iter().collect::<String>() == s.to_string())
+}
+
+pub fn is_swizzle(s: &str) -> bool {
+    let xyzw2: bool = is_instance_of_swizzle(s, "xyzw", 2);
+    let xyzw3: bool = is_instance_of_swizzle(s, "xyzw", 3);
+    let xyzw4: bool = is_instance_of_swizzle(s, "xyzw", 4);
+
+    let rgba2: bool = is_instance_of_swizzle(s, "rgba", 2);
+    let rgba3: bool = is_instance_of_swizzle(s, "rgba", 3);
+    let rgba4: bool = is_instance_of_swizzle(s, "rgba", 4);
+
+    xyzw2 || xyzw3 || xyzw4 || rgba2 || rgba3 || rgba4
+}
+
 pub fn show_expr<F>(f: &mut F, expr: &syntax::Expr)
 where
     F: Write,
@@ -982,6 +1001,8 @@ where
         syntax::Expr::Ternary(ref c, ref s, ref e) => {
             // Note: ternary is right-to-left associative (<= for right part)
 
+            let _ = f.write_str("if (");
+
             if c.precedence() < expr.precedence() {
                 show_expr(f, &c);
             } else {
@@ -989,9 +1010,11 @@ where
                 show_expr(f, &c);
                 let _ = f.write_str(")");
             }
-            let _ = f.write_str(" ? ");
+            let _ = f.write_str(") { \n\t\t");
+
+            // let _ = f.write_str(" ? ");
             show_expr(f, &s);
-            let _ = f.write_str(" : ");
+            let _ = f.write_str(";\n\t} else { \n\t\t");
             if e.precedence() <= expr.precedence() {
                 show_expr(f, &e);
             } else {
@@ -999,16 +1022,83 @@ where
                 show_expr(f, &e);
                 let _ = f.write_str(")");
             }
+            let _ = f.write_str(";\n\t}");
         }
-        syntax::Expr::Assignment(ref v, ref op, ref e) => {
-            // Note: all assignment ops are right-to-left associative
 
-            if v.precedence() < op.precedence() {
-                show_expr(f, &v);
+        syntax::Expr::TernaryWGSL(ref i, ref c, ref s, ref e) => {
+            // Note: ternary is right-to-left associative (<= for right part)
+
+            let _ = f.write_str("if (");
+
+            if c.precedence() < expr.precedence() {
+                show_expr(f, &c);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &v);
+                show_expr(f, &c);
                 let _ = f.write_str(")");
+            }
+            let _ = f.write_str(") { \n\t\t");
+
+            let _ = f.write_str(&i.0);
+            let _ = f.write_str(" = ");
+            // let _ = f.write_str(" ? ");
+            show_expr(f, &s);
+            let _ = f.write_str(";\n\t} else { \n\t\t");
+            let _ = f.write_str(&i.0);
+            let _ = f.write_str(" = ");
+            if e.precedence() <= expr.precedence() {
+                show_expr(f, &e);
+            } else {
+                let _ = f.write_str("(");
+                show_expr(f, &e);
+                let _ = f.write_str(")");
+            }
+            let _ = f.write_str(";\n\t}");
+        }
+
+        syntax::Expr::Assignment(ref v2, ref op2, ref e2) => {
+            // Note: all assignment ops are right-to-left associative
+            let mut v = v2.clone();
+            let mut op = op2.clone();
+            let mut e = e2.clone();
+
+            let mut swizzled = false;
+            let mut left_variable = "variable_name".to_string();
+            let mut swizzle = "swizzle".to_string();
+            if let syntax::Expr::Dot(left, syntax::Identifier(right)) = &**v2 {
+                if is_swizzle(right) {
+                    swizzled = true;
+                    swizzle = right.to_string();
+                    if let syntax::Expr::Variable(i) = *left.clone() {
+                        left_variable = i.to_string();
+                    }
+
+                    let _ = f.write_str("var ");
+                    let _ = f.write_str(&left_variable);
+                    // show_expr(f, &left);
+                    let _ = f.write_str(right);
+                    let _ = f.write_str(" = ");
+                    let _ = f.write_str(&left_variable);
+                    // show_expr(f, &left);
+                    let _ = f.write_str(".");
+                    let _ = f.write_str(right);
+
+                    let _ = f.write_str(";\n");
+                    indent(f, 1);
+                    let _ = f.write_str(&left_variable);
+                    // show_expr(f, &left);
+                    let _ = f.write_str(right);
+                }
+            }
+
+            if !swizzled {
+                if v.precedence() < op.precedence() {
+                    show_expr(f, &v);
+                } else {
+                    let _ = f.write_str("(");
+                    show_expr(f, &v);
+                    let _ = f.write_str(")");
+                }
             }
 
             let _ = f.write_str(" ");
@@ -1025,6 +1115,7 @@ where
                 let _ = f.write_str("(");
                 do_close_parens = true;
             }
+            // }
 
             if e.precedence() <= op.precedence() {
                 show_expr(f, &e);
@@ -1036,6 +1127,27 @@ where
 
             if do_close_parens {
                 let _ = f.write_str(")");
+            }
+
+            if swizzled {
+                // let _ = f.write_str(";\n");
+                // indent(f, 1);
+                // show_expr(f, &v);
+                swizzle.chars().for_each(|c| {
+                    let _ = f.write_str(";\n");
+                    indent(f, 1);
+                    // show_expr(f, &left);
+                    let _ = f.write_str(&left_variable);
+                    let _ = f.write_str(".");
+                    let _ = f.write_str(&c.to_string());
+                    let _ = f.write_str(" = ");
+                    let _ = f.write_str(&left_variable);
+                    // show_expr(f, &left);
+                    let _ = f.write_str(&swizzle);
+                    let _ = f.write_str(".");
+                    let _ = f.write_str(&c.to_string());
+                });
+                // let _ = f.write_str(.next().collect::<&str>());
             }
         }
         syntax::Expr::Bracket(ref e, ref a) => {
@@ -1091,7 +1203,7 @@ where
                     let _ = f.write_str(", ");
 
                     if do_convert_to_float {
-                        let new_e = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
+                        let new_e = convert_to_float(e.clone(), &TypeSpecifierNonArray::Float);
                         show_expr(f, &new_e);
                     } else {
                         show_expr(f, e);
@@ -1462,6 +1574,21 @@ where
     F: Write,
 {
     indent(f, i);
+
+    let mut ternary = false;
+
+    if let syntax::SingleDeclaration {
+        ty: _,
+        name: _,
+        array_specifier: _,
+        initializer: Some(syntax::Initializer::Simple(ref e)),
+    } = d.clone()
+    {
+        if let syntax::Expr::Ternary(_, _, _) = &**e {
+            ternary = true;
+        }
+    }
+
     let mut nolet = false;
     let ty = &d.ty.ty.ty;
 
@@ -1502,9 +1629,35 @@ where
         }
     }
 
-    if let Some(ref initializer) = d.initializer {
-        let _ = f.write_str(" = ");
-        show_initializer(f, initializer, ty);
+    if !ternary {
+        if let Some(ref initializer) = d.initializer {
+            let _ = f.write_str(" = ");
+            show_initializer(f, initializer, ty);
+        }
+    } else {
+        let _ = f.write_str(";\n");
+        indent(f, i);
+
+        if let syntax::SingleDeclaration {
+            ty: tt,
+            name: Some(name),
+            array_specifier: aa,
+            initializer: Some(syntax::Initializer::Simple(ref e)),
+        } = d.clone()
+        {
+            if let syntax::Expr::Ternary(a, b, c) = &**e {
+                let ternary_init =
+                    syntax::Initializer::Simple(Box::new(syntax::Expr::TernaryWGSL(
+                        syntax::Identifier(name.to_string()),
+                        Box::new(*a.clone()),
+                        Box::new(*b.clone()),
+                        Box::new(*c.clone()),
+                    )));
+                show_initializer(f, &ternary_init, ty);
+            }
+        }
+        // show_initializer(f, initializer, ty);
+        // let _ = f.write_str("here");
     }
 }
 
@@ -1535,7 +1688,7 @@ pub fn show_single_declaration_no_type<F>(
 
     show_type_specifier(f, &t.ty);
     let ty = &t.ty.ty;
-    let ty_is_float = is_float(ty);
+    // let ty_is_float = is_float(ty);
 
     if let Some(ref initializer) = d.initializer {
         let _ = f.write_str(" = ");
@@ -1553,7 +1706,15 @@ pub fn convert_to_float(e: syntax::Expr, ty: &TypeSpecifierNonArray) -> syntax::
                 .map(|inner_e| convert_to_float(inner_e.clone(), ty))
                 .collect(),
         ),
+        syntax::Expr::UIntConst(ref x) if is_float(ty) => syntax::Expr::FloatConst(*x as f32),
 
+        syntax::Expr::Unary(syntax::UnaryOp::Minus, ref e) => {
+            //
+            syntax::Expr::Unary(
+                syntax::UnaryOp::Minus,
+                Box::new(convert_to_float(*e.clone(), &ty)),
+            )
+        }
         x => x.clone(),
     };
     new_exp
@@ -1704,7 +1865,7 @@ where
         syntax::SelectionRestStatement::Else(ref if_st, ref else_st) => {
             show_statement(f, if_st, i);
             indent(f, i);
-            let _ = f.write_str("} else {");
+            let _ = f.write_str("} else { \n");
             show_statement(f, else_st, i);
             indent(f, i);
             let _ = f.write_str("}\n");

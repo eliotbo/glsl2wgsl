@@ -47,7 +47,7 @@ pub fn parse_define(i: &str) -> ParserResult<String> {
             .and(space1)
             .and(take_while1(identifier_num_pred)),
         |x| {
-            let mut name = "let ".to_string();
+            let mut name = "var<private> ".to_string();
             name.push_str(x.0 .0);
             name.push_str(" = ");
             name.push_str(x.1);

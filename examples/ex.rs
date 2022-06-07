@@ -1,3 +1,5 @@
+
+
 // use glsl2wgsl::parser::Parse;
 use glsl2wgsl::parser::Parse;
 use glsl2wgsl::nom_helpers::Span;
@@ -7,9 +9,12 @@ use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 use glsl2wgsl::let2var::let2var_parser;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
+// use glsl2wgsl::var_private_parser::add_private_to_global_vars;
+// use glsl2wgsl::parse_func_defines::func_definition_parser;
 
 use std::fs;
 
+#[allow(dead_code)]  
 const ALL: &str = 
 "vec2 e = vec2(3.0);
 float b = 1.0;
@@ -66,35 +71,49 @@ const float yaa[2] = float[2](5.5, 8.7);
 
 ";
 
+#[allow(dead_code)]  
 const SIMPLE_VEC2: &str = 
 "vec2 e = vec2(3.0);
 float b = 1.0;";
 
+#[allow(dead_code)]  
 const CONST: &str = "const vec2 e = vec2(.00035, -.00035);";
+
+#[allow(dead_code)]  
 const FUNC_PROTO: &str = "
 vec3 norm(vec3 po) {}
 vec2 norm2(vec2 wq) {}
 ";
+
+#[allow(dead_code)]  
 const FUNC_PROTO_CONTENT: &str =    
  "vec3 norm(vec3 po) {
   int what = 3;
   int a = 2;
   return what;
 }";
+
+#[allow(dead_code)]  
 const ASSIGN_OP: &str =     
   "vec4 rd = vec4(0.);
 void norm(vec3 po) {
   rd.x *= 2. + 3.;
 }";
+
+#[allow(dead_code)]  
 const ASSIGN_OP_WGSL: &str  = 
 "let rd: vec4<f32> = vec4<f32>(0.);\nnorm(po: vec3<f32>) -> () {\n\trd.x = rd.x * (2.+3.);\n}\n\n";
 
+#[allow(dead_code)]  
 const FOR_LOOP: &str = "void main() { for(int i = 0; i < 120; i++) { a = 3; } }";
+
+#[allow(dead_code)]  
 const ARRAYED_DECLARATION: &str = 
 "void norm(vec3 po) {
   float r = 2.0, e = 1.0;
 }";
 
+#[allow(dead_code)]  
 const IF_ELSE: &str = 
 "void norm(vec3 po) {
   if (r.x > d.x) {
@@ -107,14 +126,17 @@ const IF_ELSE: &str =
 
 }";
 
+#[allow(dead_code)]  
 const IF: &str = 
 "void norm(vec3 po) {
   if (r.x > d.x) r = d;
 }";
 
+#[allow(dead_code)]  
 const IN_OUT: &str = "void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {}";
 
+#[allow(dead_code)]  
 const SIMPLE_STRUCT: &str =   
 "struct Light
 {
@@ -122,6 +144,7 @@ float intensity;
 };
 ";
 
+#[allow(dead_code)]  
 const STRUCT: &str =   
 "struct Light
 {
@@ -131,9 +154,11 @@ vec3 position;
 uniform Light myLights;
 ";
 
+#[allow(dead_code)]  
 const ARRAY: &str = 
 "const float yaa[2] = float[2](5.5, 8.7);";
 
+#[allow(dead_code)]  
 const TEST1: &str = "
 
 mat3 getRotZMat(float a){return mat3(cos(a),-sin(a),0.,sin(a),cos(a),0.,0.,0.,1.);}
@@ -181,11 +206,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 }
 ";
 
+#[allow(dead_code)]  
 const TWO_FN: &str = "
 void main() {}
 void main() {}
 ";
 
+#[allow(dead_code)]  
 const COND: &str = "
 void main() {
   if (w) {
@@ -197,6 +224,7 @@ void main() {
   }
 }";
 
+#[allow(dead_code)]
 const PAINT: &str ="
 void mainImage( out vec4 U, in vec2 pos )
 {
@@ -232,29 +260,68 @@ void mainImage( out vec4 U, in vec2 pos )
 }
 ";
 
+#[allow(dead_code)]  
 const DEFINE: &str = "
-#define Bf(p) p
-#define Bi(p) ivec2(p)
-#define texel(a, p) texelFetch(a, Bi(p), 0)
-#define pixel(a, p) texture(a, (p)/R)
-#define ch0 iChannel0
-#define ch1 iChannel1
-#define ch2 iChannel2
-#define ch3 iChannel3
+#define texel(a, p, b) texelFetch(a, Bi(p), 0)
+#define blah 3.4
 
-#define PI 3.14159265
+void main() {
+  blah = 3.5;
+  float heih = 4.5;
+}
 
-#define loop(i,x) for(int i = 0; i < x; i++)
-#define range(i,a,b) for(int i = a; i <= b; i++)
-
-#define dt 1.5
-
-#define border_h 5.
+float hein(float x) {
+  return x+3;
+}
 ";
+
+#[allow(dead_code)]  
+const XYZ: &str = "
+
+void main() {
+  q.xy = vec2(-1, 3);
+
+  blah.rg += 2;
+}";
+
+#[allow(dead_code)]  
+const MINUS_FLOAT: &str = "
+void main() {
+  vec2 q = vec2(-1, 3);
+
+}
+";
+
+#[allow(dead_code)]  
+const IF_QUESTION: &str = "
+void main() {
+  float q = w?1:4;
+
+}
+";
+
+// TODO: 
+
+
+// 3. 
+// #define T(p) texelFetch(iChannel0, ivec2(mod(p,R)), 0) 
+// #define P(p) texture(iChannel0, mod(p,R)/R)
+// #define C(p) texture(iChannel1, mod(p,R)/R)
+// they because variations on textureLoad(buffer, location)
+//
+// 4. return after "{" in an if statement
+//
+// 5. for (var i: f32 = -BLUR_DEPTH; i <= BLUR_DEPTH; i = i + 1) {
+//    the var is an f32, but the equation on the right has an int in it...
+//
+
+// 7. fn X(U: vec2<f32>, Q2: vec4<f32>, u: vec2<f32>) -> vec4<f32> {
+//         var Q = Q2;
+// here Q is an inout variable
 
 fn main() {
   // let r = TEST1;
-  let r = DEFINE;
+  let r = IF_QUESTION;
 
   let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();
@@ -263,10 +330,14 @@ fn main() {
   buf = let2var_parser(&buf).unwrap().1;
   buf = uniform_vars_parser(&buf).unwrap().1;
   buf = definition_parser(&buf).unwrap().1;
+  // buf = add_private_to_global_vars(&buf);
+  // buf = func_definition_parser(&buf).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   println!("{:?}", trans);
   println!("{:?}", buf);
+
+
 
   // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
   // assert_eq!(&do_parse(CONST), "const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);\n");
@@ -278,11 +349,11 @@ fn main() {
   // assert_eq!(&do_parse(MULTI_DECLARATION), "norm(po: vec3<f32>) -> () {\n    if (r.x>d.x) {\nr = d;\n}\n}\n");
 }
 
-fn do_parse(x: &str) -> String {
-  let trans = syntax::TranslationUnit::parse(Span::new(x)).unwrap();
-  let mut buf = String::new();
+// fn do_parse(x: &str) -> String {
+//   let trans = syntax::TranslationUnit::parse(Span::new(x)).unwrap();
+//   let mut buf = String::new();
   
-  show_translation_unit(&mut buf, &trans);
-  return buf
-  // fs::write("./foo.txt", &buf).expect("Unable to write file");
-}
+//   show_translation_unit(&mut buf, &trans);
+//   return buf
+//   // fs::write("./foo.txt", &buf).expect("Unable to write file");
+// }

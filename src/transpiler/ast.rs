@@ -269,3 +269,85 @@ TranslationUnit(
                                     [IntConst(0), IntConst(0)])))) }, 
                     tail: [] }))]))
 )
+
+
+// two functions 
+TranslationUnit(
+    NonEmpty(
+        [FunctionDefinition(FunctionDefinition { 
+            prototype: FunctionPrototype { ty: FullySpecifiedType {
+                 qualifier: None, ty: TypeSpecifier { ty: Void, array_specifier: None } 
+            }, 
+                name: Identifier("main"), 
+                parameters: [] 
+            }, 
+            statement: CompoundStatement { 
+                statement_list: [] } }
+        ), 
+        FunctionDefinition(FunctionDefinition { 
+            prototype: FunctionPrototype { ty: FullySpecifiedType { 
+                qualifier: None, ty: TypeSpecifier { ty: Void, array_specifier: None } 
+            }, 
+                name: Identifier("main"), 
+                parameters: [] 
+            }, 
+            statement: CompoundStatement { 
+                statement_list: [] } })]))
+
+// single if statement
+TranslationUnit(NonEmpty([
+    FunctionDefinition(
+        FunctionDefinition { 
+            prototype: FunctionPrototype { ty: FullySpecifiedType { qualifier: None, 
+            ty: TypeSpecifier { ty: Void, array_specifier: None } }, name: Identifier("main"),
+             parameters: [] }, 
+    statement: CompoundStatement { 
+        statement_list: [
+            Simple(
+                Selection(
+                    SelectionStatement { 
+                        cond: Variable(Identifier("w")), 
+                        rest: Statement(
+                            Compound(
+                                CompoundStatement { 
+                                    statement_list: [
+                                        Simple(Jump(Return(Some(BoolConst(true)))
+        ))] })) }))] } })]))
+
+TranslationUnit(
+    NonEmpty([
+        Preprocessor(
+            Define(
+                FunctionLike { ident: Identifier("Bf"), args: [Identifier("p")], value: "p" }))]))
+
+TranslationUnit(
+    NonEmpty([
+        Preprocessor(
+            Define(ObjectLike { ident: Identifier("Bf"), value: "p" }))]))
+
+TranslationUnit(
+    NonEmpty(
+        [FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType {
+                         qualifier: None, 
+                         ty: TypeSpecifier { 
+                             ty: Void, array_specifier: None 
+                         } 
+                    }, 
+                    name: Identifier("main"), 
+                    parameters: [] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [Simple(
+                        Expression(
+                            Some(
+                                Assignment(
+                                    Dot(
+                                        Variable(Identifier("q")), 
+                                        Identifier("xy")
+                                    ), 
+                                    Equal, 
+                                    FunCall(Identifier(Identifier("vec2<f32>")), 
+                                        [FloatConst(1.0)])))))] } })]))

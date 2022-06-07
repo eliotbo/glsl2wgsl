@@ -97,6 +97,7 @@ fn identifier_str(i: Span) -> IResult2<Span> {
 /// Parse a string that could be used as an identifier.
 pub fn string(i: Span) -> IResult2<String> {
     map(identifier_str, |x| to_wgsl(x))(i)
+    // map(identifier_str, |x| x.fragment().to_string())(i)
 }
 
 /// Parse an identifier.
@@ -161,7 +162,7 @@ pub fn type_specifier_non_struct(i: Span) -> IResult2<syntax::TypeSpecifierNonAr
         "uint" => Ok((i1, syntax::TypeSpecifierNonArray::UInt)),
         "float" => Ok((i1, syntax::TypeSpecifierNonArray::Float)),
         "double" => Ok((i1, syntax::TypeSpecifierNonArray::Double)),
-        "vec2" => Ok((i1, syntax::TypeSpecifierNonArray::Vec2)),
+        "vec2d" => Ok((i1, syntax::TypeSpecifierNonArray::Vec2)),
         "vec3" => Ok((i1, syntax::TypeSpecifierNonArray::Vec3)),
         "vec4" => Ok((i1, syntax::TypeSpecifierNonArray::Vec4)),
         "dvec2" => Ok((i1, syntax::TypeSpecifierNonArray::DVec2)),

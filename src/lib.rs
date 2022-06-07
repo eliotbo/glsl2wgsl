@@ -14,6 +14,7 @@ pub mod syntax;
 pub mod transpiler;
 
 pub mod nom_helpers;
+// pub mod parse_func_defines;
 pub mod replace_defines;
 pub mod replace_unis;
 
@@ -81,6 +82,8 @@ pub fn do_parse(x: String) -> String {
             let lets = let2var_parser(&buf).unwrap();
             let unis = uniform_vars_parser(&lets.1).unwrap();
             let defi = definition_parser(&unis.1).unwrap().1;
+            // let private_vars = add_private_to_global_vars(&defi);
+
             println!("{:?}", defi);
             buf = defi;
 
