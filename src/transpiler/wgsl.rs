@@ -1530,7 +1530,7 @@ where
         syntax::FunctionParameterDeclaration::Named(ref qual, ref fpd) => {
             if let Some(ref q) = *qual {
                 show_type_qualifier(f, q);
-                let _ = f.write_str(" ");
+                // let _ = f.write_str(" ");
             }
 
             show_function_parameter_declarator(f, fpd);

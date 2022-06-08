@@ -351,3 +351,179 @@ TranslationUnit(
                                     Equal, 
                                     FunCall(Identifier(Identifier("vec2<f32>")), 
                                         [FloatConst(1.0)])))))] } })]))
+
+    
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("main"), 
+                    parameters: [] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [
+                        Simple(
+                            Declaration(
+                                InitDeclaratorList(
+                                    InitDeclaratorList { 
+                                        head: SingleDeclaration { 
+                                            ty: FullySpecifiedType { 
+                                                qualifier: None, 
+                                                ty: TypeSpecifier { 
+                                                    ty: TypeName(TypeName("vec2<f32>")), 
+                                                    array_specifier: None } 
+                                            }, 
+                                            name: Some(Identifier("q")), 
+                                            array_specifier: None, 
+                                            initializer: Some(Simple(FunCall(Identifier(Identifier("vec2<f32>")), 
+                                            [Unary(Minus, IntConst(1)), IntConst(3)]))) }, 
+                                        tail: [] })))] } })]))
+
+FunctionDefinition(
+    FunctionDefinition { 
+        prototype: FunctionPrototype { 
+            ty: FullySpecifiedType { 
+                qualifier: None, 
+                ty: TypeSpecifier { 
+                    ty: Void, 
+                    array_specifier: None } 
+            }, 
+            name: Identifier("main"), 
+            parameters: [] 
+        }, 
+        statement: CompoundStatement { 
+            statement_list: [Simple(
+                Declaration(
+                    InitDeclaratorList(
+                        InitDeclaratorList { 
+                            head: SingleDeclaration { 
+                                ty: FullySpecifiedType { 
+                                    qualifier: None, 
+                                    ty: TypeSpecifier { 
+                                        ty: Float, 
+                                        array_specifier: None } 
+                                }, 
+                                name: Some(Identifier("q")), 
+                                array_specifier: None, 
+                                initializer: Some(Simple(Ternary(Variable(Identifier("w")), 
+                                    IntConst(1), IntConst(4)))) }, 
+                            tail: [] })))] } })]))
+
+(NonEmpty(
+    [FunctionDefinition(
+        FunctionDefinition { 
+            prototype: FunctionPrototype { 
+                ty: FullySpecifiedType { 
+                    qualifier: None, 
+                    ty: TypeSpecifier { 
+                        ty: Void, array_specifier: None } 
+                }, 
+                name: Identifier("mainImage"), 
+                parameters: []
+            }, 
+            statement: CompoundStatement { 
+                statement_list: [
+                    Simple(Iteration(For(Declaration(InitDeclaratorList
+                        (InitDeclaratorList { 
+                            head: SingleDeclaration { 
+                                ty: FullySpecifiedType { 
+                                    qualifier: None, 
+                                    ty: TypeSpecifier { 
+                                        ty: Float, 
+                                        array_specifier: None } 
+                                }, 
+                                name: Some(Identifier("i")), 
+                            array_specifier: None, 
+                            initializer: Some(Simple(Variable(Identifier("a")))) 
+                        }, tail: [] })), ForRestStatement { condition: Some(Expr(Binary(LT, Variable(Identifier("i")), Variable(Identifier("b"))))), post_expr: Some(Assignment(Variable(Identifier("i")), Equal, Binary(Add, Variable(Identifier("i")), IntConst(1)))) }, Compound(CompoundStatement { statement_list: [] }))))] } })]))
+
+                        Assignment(Variable(Identifier("i")), Equal, Binary(Add, Variable(Identifier("i")), IntConst(1)))
+
+Simple(Iteration(For(Declaration(
+    InitDeclaratorList(InitDeclaratorList { 
+        head: SingleDeclaration { 
+            ty: FullySpecifiedType { 
+                qualifier: None, 
+                ty: TypeSpecifier { 
+                    ty: Float, 
+                    array_specifier: None } 
+                }, 
+            name: Some(Identifier("i")), 
+            array_specifier: None, 
+            initializer: Some(Simple(IntConst(1))) 
+        }, 
+        tail: [] })
+), 
+ForRestStatement { 
+    condition: Some(Expr(Binary(LT, Variable(Identifier("i")), IntConst(2)))), 
+    post_expr: Some(Assignment(Variable(Identifier("i")), Equal, 
+        Binary(Add, Variable(Identifier("i")), IntConst(1)))) 
+}, 
+Compound(CompoundStatement { statement_list: [] }))))] } })]))
+
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, array_specifier: None } 
+                    }, 
+                    name: Identifier("mainImage"), 
+                    parameters: [
+                        Named(
+                            Some(TypeQualifier { qualifiers: NonEmpty([Storage(Out)]) }), 
+                            FunctionParameterDeclarator { 
+                                ty: TypeSpecifier { 
+                                    ty: Vec4, 
+                                    array_specifier: None }, 
+                                ident: ArrayedIdentifier { 
+                                    ident: Identifier("U"), array_spec: None } }
+                        ), 
+                        Named(
+                            Some(TypeQualifier { qualifiers: NonEmpty([Storage(In)]) }), 
+                            FunctionParameterDeclarator { 
+                                ty: TypeSpecifier { 
+                                    ty: TypeName(TypeName("vec2<f32>")), 
+                                    array_specifier: None 
+                                }, 
+                                ident: ArrayedIdentifier { 
+                                    ident: Identifier("pos"), 
+                                    array_spec: None } })] }, 
+                                    statement: CompoundStatement { statement_list: [] } })]))
+
+TranslationUnit(
+    NonEmpty([
+        Preprocessor(
+            Define(
+                FunctionLike { 
+                    ident: Identifier("P"), 
+                    args: [Identifier("p")], 
+                    value: "texture(iChannel0, p)" })
+        ), 
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("main"), 
+                    parameters: [] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [Simple(Expression(Some(FunCall(
+                        Identifier(Identifier("P")), 
+                        [Variable(Identifier("ch0"))]
+))))] } })]))

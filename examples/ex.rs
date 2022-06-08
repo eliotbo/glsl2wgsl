@@ -9,6 +9,7 @@ use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 use glsl2wgsl::let2var::let2var_parser;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
+use glsl2wgsl::replace_main::*;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
 // use glsl2wgsl::parse_func_defines::func_definition_parser;
 
@@ -310,9 +311,22 @@ void mainImage(  )
 }
 ";
 
+const DEFINES_FUNC: &str = "
+ #define P(p) texture(iChannel0, p)
+ void main() {
+   P(ch0);
+ }
+";
+
+// void mainImage( out vec4 U, in vec2 pos )
+// {}
+const MAIN_FUNC: &str = 
+" void mainImage( out vec4 U, in vec2 pos )
+{ a= 5;}";
+
+// "U: vec4<f32>,  pos: vec2<f32>";
+
 // TODO: 
-
-
 // 3. 
 // #define T(p) texelFetch(iChannel0, ivec2(mod(p,R)), 0) 
 // #define P(p) texture(iChannel0, mod(p,R)/R)
@@ -324,11 +338,12 @@ void mainImage(  )
 //         var Q = Q2;
 // here Q is an inout variable
 
-// 8. convert main -> update, with location and y_inverted_location
+// fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {
+// } 
 
 fn main() {
-  let r = FOR_CONVERT_TO_FLOAT;
-  // let r = IF_QUESTION;
+  // let r = DEFINES_FUNC;
+  let r = MAIN_FUNC;
 
   let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();
@@ -337,11 +352,15 @@ fn main() {
   buf = let2var_parser(&buf).unwrap().1;
   buf = uniform_vars_parser(&buf).unwrap().1;
   buf = definition_parser(&buf).unwrap().1;
+  buf = replace_main_line(&buf).unwrap().1;
+
+  // buf = replace_main_line(&MAIN_FUNC).unwrap().1;
   // buf = add_private_to_global_vars(&buf);
+
   // buf = func_definition_parser(&buf).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  println!("{:?}", trans);
+  // println!("{:?}", trans);
   println!("{:?}", buf);
 
 

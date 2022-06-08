@@ -16,6 +16,7 @@ pub mod transpiler;
 pub mod nom_helpers;
 // pub mod parse_func_defines;
 pub mod replace_defines;
+pub mod replace_main;
 pub mod replace_unis;
 
 use replace_defines::*;
