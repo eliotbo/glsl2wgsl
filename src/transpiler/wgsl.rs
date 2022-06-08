@@ -1010,11 +1010,11 @@ where
                 show_expr(f, &c);
                 let _ = f.write_str(")");
             }
-            let _ = f.write_str(") { \n\t\t");
+            let _ = f.write_str(") { ");
 
             // let _ = f.write_str(" ? ");
             show_expr(f, &s);
-            let _ = f.write_str(";\n\t} else { \n\t\t");
+            let _ = f.write_str("; } else { ");
             if e.precedence() <= expr.precedence() {
                 show_expr(f, &e);
             } else {
@@ -1022,7 +1022,7 @@ where
                 show_expr(f, &e);
                 let _ = f.write_str(")");
             }
-            let _ = f.write_str(";\n\t}");
+            let _ = f.write_str("; }");
         }
 
         syntax::Expr::TernaryWGSL(ref i, ref c, ref s, ref e) => {
@@ -1037,13 +1037,13 @@ where
                 show_expr(f, &c);
                 let _ = f.write_str(")");
             }
-            let _ = f.write_str(") { \n\t\t");
+            let _ = f.write_str(") { ");
 
             let _ = f.write_str(&i.0);
             let _ = f.write_str(" = ");
             // let _ = f.write_str(" ? ");
             show_expr(f, &s);
-            let _ = f.write_str(";\n\t} else { \n\t\t");
+            let _ = f.write_str("; } else { ");
             let _ = f.write_str(&i.0);
             let _ = f.write_str(" = ");
             if e.precedence() <= expr.precedence() {
@@ -1053,7 +1053,7 @@ where
                 show_expr(f, &e);
                 let _ = f.write_str(")");
             }
-            let _ = f.write_str(";\n\t}");
+            let _ = f.write_str("; }");
         }
 
         syntax::Expr::Assignment(ref v2, ref op2, ref e2) => {
@@ -1635,8 +1635,7 @@ where
             show_initializer(f, initializer, ty);
         }
     } else {
-        let _ = f.write_str(";\n");
-        indent(f, i);
+        let _ = f.write_str("; ");
 
         if let syntax::SingleDeclaration {
             ty: tt,
@@ -1793,8 +1792,8 @@ where
         // let _ = f.write_str("    ");
         show_statement(f, st, i + 1);
     }
-    indent(f, i);
-    let _ = f.write_str("\n");
+    // indent(f, i);
+    // let _ = f.write_str("\n");
 }
 
 pub fn show_statement<F>(f: &mut F, st: &syntax::Statement, i: Indent)
@@ -1841,12 +1840,14 @@ pub fn show_selection_statement<F>(f: &mut F, sst: &syntax::SelectionStatement, 
 where
     F: Write,
 {
+    let _ = f.write_str("\n");
     indent(f, i);
     let _ = f.write_str("if (");
     show_expr(f, &sst.cond);
     let _ = f.write_str(") {");
 
     show_selection_rest_statement(f, &sst.rest, i);
+    let _ = f.write_str("\n");
     // indent(f, i);
     // let _ = f.write_str("}");
 }
@@ -1925,6 +1926,7 @@ where
             let _ = f.write_str(")\n");
         }
         syntax::IterationStatement::For(ref init, ref rest, ref body) => {
+            let _ = f.write_str("\n");
             indent(f, i);
             let _ = f.write_str("for (");
             show_for_init_statement(f, init);
@@ -1933,7 +1935,7 @@ where
             let _ = f.write_str(") {");
             show_statement(f, body, i);
             indent(f, i);
-            let _ = f.write_str("}");
+            let _ = f.write_str("}\n\n");
         }
     }
 }

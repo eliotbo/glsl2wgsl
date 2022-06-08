@@ -1,10 +1,45 @@
-fn main() -> () {
-	let q: f32;
-	if (w) { 
-		q = 1;
-	} else { 
-		q = 4;
-	};
+fn hsv2rgb( c: vec3<f32>) -> vec3<f32> {
+	var rgb: vec3<f32> = clamp(abs(mod(c.x * 6. + vec3<f32>(0., 4., 2.), 6.) - 3.) - 1., 0., 1.);
+	rgb = rgb * rgb * (3. - 2. * rgb);
+	return c.z * mix(vec3<f32>(1.), rgb, c.y);
+} 
 
+const KEY_SPACE: i32 = 32;
+fn isKeyPressed(KEY: i32) -> bool {
+	return texelFetch(iChannel3, vec2<i32>(KEY, 2), 0).x > 0.5;
+} 
+
+var<private> radius = 1.0;
+
+var<private> zoom = 0.3;
+
+fn mainImage( col: vec4<f32>,  pos: vec2<f32>) -> () {
+
+	if (isKeyPressed(KEY_SPACE)) {
+		pos = uni.iMouse.xy + pos * zoom - R * zoom * 0.5;
+	}
+
+	var rho: f32 = 0.001;
+	var vel: vec2<f32> = vec2<f32>(0., 0.);
+
+	for (var i: i32 = a; i <= b; i = i + 1) {
+		let tpos: vec2<f32> = floor(pos) + vec2<f32>(i, j);
+		let data: vec4<f32> = T(tpos);
+		let X0: vec2<f32> = DECODE(data.x) + tpos;
+		let V0: vec2<f32> = DECODE(data.y);
+		let M0: f32 = data.z;
+		let dx: vec2<f32> = X0 - pos;
+		let K: f32 = GS(dx / radius) / (radius * radius);
+		rho = rho + (M0 * K);
+		vel = vel + (M0 * K * V0);
+	}
+
+	vel = vel / (rho);
+	let vc: vec3<f32> = hsv2rgb(vec3<f32>(6. * atan(vel.x, vel.y) / (2. * PI), 1., rho * length(vel.xy)));
+	var colxyz = col.xyz;
+	colxyz = cos(0.9 * vec3<f32>(3., 2., 1.) * rho) + 0. * vc;
+	col.x = colxyz.x;
+	col.y = colxyz.y;
+	col.z = colxyz.z;
 } 
 
