@@ -300,57 +300,13 @@ void main() {
 }
 ";
 
-const TES: &str = "
-
-
-vec3 hsv2rgb( in vec3 c )
-{
-    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
-
-	rgb = rgb*rgb*(3.0-2.0*rgb); // cubic smoothing	
-
-	return c.z * mix( vec3(1.0), rgb, c.y);
-}
-
-const int KEY_SPACE = 32;
-bool isKeyPressed(int KEY)
-{
-	return texelFetch( iChannel3, ivec2(KEY,2), 0 ).x > 0.5;
-}
-
-
-#define radius 1.0
-#define zoom 0.3
-
-void mainImage( out vec4 col, in vec2 pos )
+const FOR_CONVERT_TO_FLOAT: &str = "
+void mainImage(  )
 {    
-    //zoom in
-    if(isKeyPressed(KEY_SPACE))
+    for(float i = 1; i < 2; i = i + 1)
     {
-    	pos = iMouse.xy + pos*zoom - R*zoom*0.5;
+
     }
-    float rho = 0.001;
-    vec2 vel = vec2(0., 0.);
-
-    //compute the smoothed density and velocity
-    for(int i = a; i <= b; i++)
-    {
-        vec2 tpos = floor(pos) + vec2(i,j);
-        vec4 data = T(tpos);
-
-        vec2 X0 = DECODE(data.x) + tpos;
-        vec2 V0 = DECODE(data.y);
-        float M0 = data.z;
-        vec2 dx = X0 - pos;
-
-        float K = GS(dx/radius)/(radius*radius);
-        rho += M0*K;
-        vel += M0*K*V0;
-    }
-
-   vel /= rho;
-   vec3 vc = hsv2rgb(vec3(6.*atan(vel.x, vel.y)/(2.*PI), 1.0, rho*length(vel.xy)));
-   col.xyz = cos(0.9*vec3(3,2,1)*rho) + 0.*vc;
 }
 ";
 
@@ -362,12 +318,7 @@ void mainImage( out vec4 col, in vec2 pos )
 // #define P(p) texture(iChannel0, mod(p,R)/R)
 // #define C(p) texture(iChannel1, mod(p,R)/R)
 // they because variations on textureLoad(buffer, location)
-//
-// 4. return after "{" in an if statement
-//
-// 5. for (var i: f32 = -BLUR_DEPTH; i <= BLUR_DEPTH; i = i + 1) {
-//    the var is an f32, but the equation on the right has an int in it...
-//
+
 
 // 7. fn X(U: vec2<f32>, Q2: vec4<f32>, u: vec2<f32>) -> vec4<f32> {
 //         var Q = Q2;
@@ -376,7 +327,7 @@ void mainImage( out vec4 col, in vec2 pos )
 // 8. convert main -> update, with location and y_inverted_location
 
 fn main() {
-  let r = TES;
+  let r = FOR_CONVERT_TO_FLOAT;
   // let r = IF_QUESTION;
 
   let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();

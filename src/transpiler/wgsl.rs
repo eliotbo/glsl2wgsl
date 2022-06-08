@@ -1714,6 +1714,13 @@ pub fn convert_to_float(e: syntax::Expr, ty: &TypeSpecifierNonArray) -> syntax::
                 Box::new(convert_to_float(*e.clone(), &ty)),
             )
         }
+        syntax::Expr::Binary(a, b, ref e) => {
+            syntax::Expr::Binary(a, b, Box::new(convert_to_float(*e.clone(), &ty)))
+        }
+        syntax::Expr::Assignment(a, b, ref e) => {
+            syntax::Expr::Assignment(a, b, Box::new(convert_to_float(*e.clone(), &ty)))
+        }
+
         x => x.clone(),
     };
     new_exp
@@ -1726,9 +1733,10 @@ where
 {
     match *i {
         syntax::Initializer::Simple(ref e) => {
-            // if is_float(ty) {
-            // let new_exp = convert_to_float(*e.clone(), ty);
-            show_expr(f, &e);
+            // THIS IS NEW
+            // TODO: check if this introduces bugs
+            let new_exp = convert_to_float(*e.clone(), ty);
+            show_expr(f, &new_exp);
         }
 
         syntax::Initializer::List(ref list) => {
@@ -1914,7 +1922,10 @@ where
     match *ist {
         syntax::IterationStatement::While(ref cond, ref body) => {
             let _ = f.write_str("while (");
-            show_condition(f, cond);
+            // There is no way to check the type of the variable in the condition
+            // without parsing the whole glsl file, while loops need to be
+            // manually corrected for float conversions.
+            show_condition(f, cond, &syntax::TypeSpecifierNonArray::Int);
             let _ = f.write_str(") ");
             show_statement(f, body, i);
         }
@@ -1926,12 +1937,16 @@ where
             let _ = f.write_str(")\n");
         }
         syntax::IterationStatement::For(ref init, ref rest, ref body) => {
+            let ty = get_ty_in_for_init(init);
+
             let _ = f.write_str("\n");
             indent(f, i);
             let _ = f.write_str("for (");
-            show_for_init_statement(f, init);
+
+            show_for_init_statement(f, init, &ty);
             let _ = f.write_str(" ");
-            show_for_rest_statement(f, rest);
+
+            show_for_rest_statement(f, rest, &ty);
             let _ = f.write_str(") {");
             show_statement(f, body, i);
             indent(f, i);
@@ -1940,12 +1955,15 @@ where
     }
 }
 
-pub fn show_condition<F>(f: &mut F, c: &syntax::Condition)
+pub fn show_condition<F>(f: &mut F, c: &syntax::Condition, ty: &TypeSpecifierNonArray)
 where
     F: Write,
 {
     match *c {
-        syntax::Condition::Expr(ref e) => show_expr(f, e),
+        syntax::Condition::Expr(ref e) => {
+            let e2 = convert_to_float(*e.clone(), &ty);
+            show_expr(f, &e2);
+        }
         syntax::Condition::Assignment(ref ty, ref name, ref initializer) => {
             show_fully_specified_type(f, ty);
             let _ = f.write_str(" ");
@@ -1957,46 +1975,56 @@ where
     }
 }
 
-pub fn show_for_init_statement<F>(f: &mut F, i: &syntax::ForInitStatement)
-where
+// warning: only use in conjunction with convert_to_float():
+// get_ty_in_for_init exists exclusively for use before calling convert_to_float.
+pub fn get_ty_in_for_init(i: &syntax::ForInitStatement) -> syntax::TypeSpecifierNonArray {
+    if let syntax::ForInitStatement::Declaration(ref d) = *i {
+        if let syntax::Declaration::InitDeclaratorList(ref idl) = **d {
+            let ty = idl.clone().head.ty.ty.ty;
+            return ty;
+        }
+    }
+    return syntax::TypeSpecifierNonArray::Int;
+}
+
+pub fn show_for_init_statement<F>(
+    f: &mut F,
+    i: &syntax::ForInitStatement,
+    ty: &TypeSpecifierNonArray,
+) where
     F: Write,
 {
     match *i {
         syntax::ForInitStatement::Expression(ref expr) => {
             if let Some(ref e) = *expr {
-                show_expr(f, e);
+                let e2 = convert_to_float(e.clone(), ty);
+                show_expr(f, &e2);
             }
         }
-        syntax::ForInitStatement::Declaration(ref d) => show_declaration(f, d, 0),
+        syntax::ForInitStatement::Declaration(ref d) => {
+            //
+            show_declaration(f, d, 0);
+        }
     }
 }
 
-// pub fn show_for_init_statement_for<F>(f: &mut F, i: &syntax::ForInitStatement)
-// where
-//   F: Write,
-// {
-//   match *i {
-//     syntax::ForInitStatement::Expression(ref expr) => {
-//       if let Some(ref e) = *expr {
-//         show_expr(f, e);
-//       }
-//     }
-//     syntax::ForInitStatement::Declaration(ref d) => show_declaration(f, d, 0),
-//   }
-// }
-
-pub fn show_for_rest_statement<F>(f: &mut F, r: &syntax::ForRestStatement)
-where
+pub fn show_for_rest_statement<F>(
+    f: &mut F,
+    r: &syntax::ForRestStatement,
+    ty: &TypeSpecifierNonArray,
+) where
     F: Write,
 {
     if let Some(ref cond) = r.condition {
-        show_condition(f, cond);
+        show_condition(f, cond, ty);
     }
 
     let _ = f.write_str("; ");
 
     if let Some(ref e) = r.post_expr {
-        show_expr(f, e);
+        let e2 = convert_to_float(*e.clone(), ty);
+        println!("{:?}", e2);
+        show_expr(f, &e2);
     }
 }
 
