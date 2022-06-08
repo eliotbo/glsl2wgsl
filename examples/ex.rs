@@ -320,8 +320,11 @@ const DEFINES_FUNC: &str = "
 
 // void mainImage( out vec4 U, in vec2 pos )
 // {}
-const MAIN_FUNC: &str = 
-" void mainImage( out vec4 U, in vec2 pos )
+const MAIN_FUNC: &str = "
+void bah( out vec4 U, in vec2 pos )
+{ a= 5;}
+
+void mainImage( out vec4 U, in vec2 pos )
 { a= 5;}";
 
 // "U: vec4<f32>,  pos: vec2<f32>";
