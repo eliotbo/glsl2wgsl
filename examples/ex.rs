@@ -9,9 +9,9 @@ use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 use glsl2wgsl::let2var::let2var_parser;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
-use glsl2wgsl::replace_main::*;
+use glsl2wgsl::replace_main::replace_main_line;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
-// use glsl2wgsl::parse_func_defines::func_definition_parser;
+use glsl2wgsl::parse_func_defines::*;
 
 use std::fs;
 
@@ -263,16 +263,11 @@ void mainImage( out vec4 U, in vec2 pos )
 
 #[allow(dead_code)]  
 const DEFINE: &str = "
-#define texel(a, p, b) texelFetch(a, Bi(p), 0)
+#define texel(a, p) texelFetch(a, Bi(p), 0)
 #define blah 3.4
 
-void main() {
-  blah = 3.5;
-  float heih = 4.5;
-}
-
 float hein(float x) {
-  return x+3;
+  q = texel(tt, bb);
 }
 ";
 
@@ -311,12 +306,7 @@ void mainImage(  )
 }
 ";
 
-const DEFINES_FUNC: &str = "
- #define P(p) texture(iChannel0, p)
- void main() {
-   P(ch0);
- }
-";
+
 
 // void mainImage( out vec4 U, in vec2 pos )
 // {}
@@ -327,7 +317,24 @@ void bah( out vec4 U, in vec2 pos )
 void mainImage( out vec4 U, in vec2 pos )
 { a= 5;}";
 
-// "U: vec4<f32>,  pos: vec2<f32>";
+const DEFINES_FUNC: &str = "
+#define texel(ax, p) axelFech(ax, Bi(p), ax)
+#define t(pk, l) bobbyFisher(15, pk)
+void main() {
+   texel(ch0, q);
+   bof;
+   texel(ch4, steve);
+   gold = t(GROSSE, big)
+ }
+";
+
+const ONE_DEFINE: &str = "yaaaaa 
+#define texel(ax, p) texelFetch(ax, Bi(p), ax)
+#define q 12
+#define q t(q)
+bbbbbbb
+";
+
 
 // TODO: 
 // 3. 
@@ -336,36 +343,29 @@ void mainImage( out vec4 U, in vec2 pos )
 // #define C(p) texture(iChannel1, mod(p,R)/R)
 // they because variations on textureLoad(buffer, location)
 
+// 7. inout
 
-// 7. fn X(U: vec2<f32>, Q2: vec4<f32>, u: vec2<f32>) -> vec4<f32> {
-//         var Q = Q2;
-// here Q is an inout variable
-
-// fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {
-// } 
+// 8. replace keywords: texelFetch, texture
 
 fn main() {
   // let r = DEFINES_FUNC;
-  let r = MAIN_FUNC;
+  // let r = ONE_DEFINE;
 
-  let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   let mut buf = String::new();
+  let buf = func_definition_parser(&DEFINES_FUNC).unwrap().1;
+
+  // let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   
-  show_translation_unit(&mut buf, &trans);
-  buf = let2var_parser(&buf).unwrap().1;
-  buf = uniform_vars_parser(&buf).unwrap().1;
-  buf = definition_parser(&buf).unwrap().1;
-  buf = replace_main_line(&buf).unwrap().1;
-
-  // buf = replace_main_line(&MAIN_FUNC).unwrap().1;
-  // buf = add_private_to_global_vars(&buf);
-
-  // buf = func_definition_parser(&buf).unwrap().1;
+  // show_translation_unit(&mut buf, &trans);
+  // buf = let2var_parser(&buf).unwrap().1;
+  // buf = uniform_vars_parser(&buf).unwrap().1;
+  // buf = definition_parser(&buf).unwrap().1;
+  // buf = replace_main_line(&buf).unwrap().1;
+  
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   // println!("{:?}", trans);
   println!("{:?}", buf);
-
 
 
   // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
