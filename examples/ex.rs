@@ -318,7 +318,8 @@ void mainImage( out vec4 U, in vec2 pos )
 { a= 5;}";
 
 const DEFINES_FUNC: &str = "
-#define texel(ax, p) axelFech(ax, Bi(p), ax)
+#define texel(ax, p) elFechax(ax, Bi(p), ax)
+#define q 12
 #define t(pk, l) bobbyFisher(15, pk)
 void main() {
    texel(ch0, q);
@@ -335,6 +336,7 @@ const ONE_DEFINE: &str = "yaaaaa
 bbbbbbb
 ";
 
+const SEARCH: &str = "grodqoin( 4, wer) * qoin * tre(qwe)";
 
 // TODO: 
 // 3. 
@@ -353,6 +355,11 @@ fn main() {
 
   let mut buf = String::new();
   let buf = func_definition_parser(&DEFINES_FUNC).unwrap().1;
+  // if let Ok((rest, buf2)) = search_and_replace(SEARCH, "qoin".to_string(), "WER".to_string() ) {
+    // if let Ok((rest, buf2)) = identifier("sdfsdf " ) {
+      // println!("worked: {:?}", rest);
+    // buf = buf2.to_string();
+  // }
 
   // let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
   
