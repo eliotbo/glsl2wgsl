@@ -29,6 +29,10 @@ pub use crate::nom_helpers::{many0__span, IResult2, Span};
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
+fn identifier_hashtag(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '#'
+}
+
 fn identifier_num_pred(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_' || ch == '.'
 }
@@ -39,6 +43,10 @@ fn func_pred(ch: char) -> bool {
 
 pub fn anychar_underscore(i: &str) -> ParserResult<String> {
     map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
+}
+
+pub fn anychar_underscore_hashtag(i: &str) -> ParserResult<String> {
+    map(take_while1(identifier_hashtag), |v: &str| v.to_string())(i)
 }
 
 pub fn anychar_func(i: &str) -> ParserResult<String> {
@@ -118,8 +126,61 @@ fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
     )(i)
 }
 
+// // search (v, where v is an identifier) and replace by (num, which can be anychar)
+// pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
+//     map(
+//         many_till(
+//             many_till(
+//                 anychar,
+//                 // alt((tag(&*v), eof)),
+//                 // verify(identifier, |(x, id)| x.to_string() == v),
+//                 // alt(identifier_check(v.to_string())),
+//                 alt((verify(identifier, |x| x == v), eof)),
+//             ),
+//             eof,
+//         ),
+//         |x| {
+//             // makes sure that the identifier does not have any other alphanum characters
+//             // before and after it
+//             let mut ret = "".to_string();
+//             for (v_chars, _name) in x.0.iter() {
+//                 ret.push_str(&v_chars.iter().collect::<String>());
+//                 ret.push_str(&num);
+//             }
+//             ret
+//         },
+//     )(i)
+// }
+
 // search (v, where v is an identifier) and replace by (num, which can be anychar)
 pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
+    map(
+        many_till(
+            many_till(
+                anychar,
+                alt((
+                    verify(anychar_underscore_hashtag, |x: &str| x.to_string() == v),
+                    map(eof, |x: &str| x.to_string()),
+                )),
+            ),
+            eof,
+        ),
+        |x| {
+            //
+            let mut ret = "".to_string();
+            for (v_chars, name) in x.0.iter() {
+                ret.push_str(&v_chars.iter().collect::<String>());
+                if name == &v {
+                    ret.push_str(&num);
+                }
+            }
+            ret
+        },
+    )(i)
+}
+
+// search (v, where v is an identifier) and replace by (num, which can be anychar)
+pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
     map(
         many_till(
             many_till(
@@ -132,7 +193,8 @@ pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<Strin
             eof,
         ),
         |x| {
-            //
+            // makes sure that the identifier does not have any other alphanum characters
+            // before and after it
             let mut ret = "".to_string();
             for (v_chars, name) in x.0.iter() {
                 ret.push_str(&v_chars.iter().collect::<String>());
@@ -186,10 +248,12 @@ pub fn construct_assignment_vars(i: &str) -> ParserResult<DefineFunc> {
     let (rest, mut assignment) = get_assignment(rest)?;
 
     for (num, arg) in args.iter().enumerate() {
-        let num_str = "#arg ".to_string() + &num.to_string() + " ";
+        let num_str = "#arg_".to_string() + &num.to_string();
         println!("arg: {}", arg);
-        if let Ok((_, assignment2)) = search_and_replace(&assignment, arg.to_string(), num_str) {
-            println!("assignment2assignment2assignment2",);
+        if let Ok((_, assignment2)) =
+            search_and_replace_identifier(&assignment, arg.to_string(), num_str)
+        {
+            // println!("assignment2assignment2assignment2",);
             assignment = assignment2;
         }
     }
@@ -243,10 +307,12 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                 let mut replaced_expression = def.replace_by.to_string();
 
                 for (n, arg) in args.iter().enumerate() {
-                    let num_str = "#arg ".to_string() + &n.to_string();
+                    let num_str = "#arg_".to_string() + &n.to_string();
                     if let Ok((_, assignment)) =
-                        search_and_replace(&replaced_expression, num_str, arg.to_string())
+                        search_and_replace(&replaced_expression, num_str.clone(), arg.to_string())
                     {
+                        println!("OKAY OKAY OKAY: {}, {}", arg, &num_str);
+                        println!("replaced_expression: {}, ", replaced_expression);
                         replaced_expression = assignment;
                     }
                 }

@@ -1,8 +1,8 @@
 
 #define q 12
 void main() {
-   elFechax(#arg 0 , Bi(#arg 1 ), #arg 0 );
+   elFechax(ch0, Bi(q), ch0);
    bof;
-   elFechax(#arg 0 , Bi(#arg 1 ), #arg 0 );
-   gold = bobbyFisher(15, #arg 0 )
+   elFechax(ch4, Bi(steve), ch4);
+   gold = bobbyFisher(15, GROSSE)
  }
