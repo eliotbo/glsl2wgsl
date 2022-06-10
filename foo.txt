@@ -1,8 +1,11 @@
+fn Simulation() -> () {
 
-#define q 12
-void main() {
-   elFechax(ch0, Bi(q), ch0);
-   bof;
-   elFechax(ch4, Bi(steve), ch4);
-   gold = bobbyFisher(15, GROSSE)
- }
+	for (var i: i32 = -2; i <= 2; i = i + 1) {
+	for (var j: i32 = -2; j <= 2; j = j + 1) {
+		let tpos: vec2<f32> = pos + vec2<f32>(i, j);
+	}
+
+	}
+
+} 
+

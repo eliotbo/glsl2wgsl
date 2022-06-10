@@ -12,8 +12,8 @@
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_until, take_while1};
 use nom::character::complete::{
-    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, space0,
-    space1,
+    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
+    space0, space1,
 };
 use nom::character::{is_hex_digit, is_oct_digit};
 use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
@@ -25,7 +25,8 @@ use nom::Parser;
 
 use nom::IResult;
 
-pub use crate::nom_helpers::{many0__span, IResult2, Span};
+// pub use crate::nom_helpers::{many0__span, IResult2, Span};
+pub use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
@@ -115,11 +116,36 @@ pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
+pub fn argument1(i: &str) -> ParserResult<String> {
+    map(many_till(anychar, peek(one_of(",)"))), |x| {
+        x.0.iter().collect::<String>()
+        // &s
+    })(i)
+}
+
+pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
     map(
         delimited(
             tag("("),
-            separated_list0(terminated(char(','), multispace0), anychar_underscore),
+            separated_list0(
+                delimited(multispace0, char(','), multispace0),
+                alt((argument1, map(multispace0, |x: &str| x.to_string()))),
+            ),
+            tag(")"),
+        ),
+        // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
+        |x: Vec<String>| x,
+    )(i)
+}
+
+pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
+    map(
+        delimited(
+            tag("("),
+            separated_list0(
+                delimited(multispace0, char(','), multispace0),
+                anychar_underscore,
+            ),
             tag(")"),
         ),
         |x| x,
@@ -223,9 +249,9 @@ pub fn replace_tag(i: &str) -> ParserResult<(String, Vec<String>)> {
 
 #[derive(Debug, Clone)]
 pub struct DefineFunc {
-    name: String,
-    args: Vec<String>,
-    replace_by: String,
+    pub name: String,
+    pub args: Vec<String>,
+    pub replace_by: String,
 }
 
 // pub fn get_name_and_args(i: &str) -> ParserResult<(String, Vec<String>)> {
@@ -249,7 +275,7 @@ pub fn construct_assignment_vars(i: &str) -> ParserResult<DefineFunc> {
 
     for (num, arg) in args.iter().enumerate() {
         let num_str = "#arg_".to_string() + &num.to_string();
-        println!("arg: {}", arg);
+        // println!("arg: {}", arg);
         if let Ok((_, assignment2)) =
             search_and_replace_identifier(&assignment, arg.to_string(), num_str)
         {
@@ -293,16 +319,17 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                 anychar,
                 verify(anychar_underscore, |x: &str| x.to_string() == def.name),
             )
-            .and(function_call_args),
+            .and(function_call_args_anychar),
         )
         .and(rest_of_script),
         // many0(many_till(anychar, (tag(&*def.name))).and(function_call_args)).and(rest_of_script),
         |(lines, rest)| {
             //
+            // println!(  "success : {:?}", rest );
 
             let mut all_script = "".to_string();
             for ((so_far_chars, _), args) in lines.iter() {
-                // println!("def : {:?}", def);
+                // println!("arggs : {:?}", args);
                 let mut so_far = so_far_chars.iter().collect::<String>();
                 let mut replaced_expression = def.replace_by.to_string();
 
@@ -311,8 +338,8 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                     if let Ok((_, assignment)) =
                         search_and_replace(&replaced_expression, num_str.clone(), arg.to_string())
                     {
-                        println!("OKAY OKAY OKAY: {}, {}", arg, &num_str);
-                        println!("replaced_expression: {}, ", replaced_expression);
+                        // println!("OKAY OKAY OKAY: {}, {}", arg, &num_str);
+                        // println!("replaced_expression: {}, ", replaced_expression);
                         replaced_expression = assignment;
                     }
                 }
@@ -352,9 +379,9 @@ pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserRe
 
 pub fn func_definition_parser(i: &str) -> ParserResult<String> {
     let (rest, define_funcs) = get_all_define_funcs(i)?;
-    // println!("def : {:?}", def);
+    println!("def : {:?}", define_funcs);
     let (_, no_defines) = erase_all_func_defines(i)?;
-    println!("define_funcs: {:?}", define_funcs);
+    // println!("define_funcs: {:?}", define_funcs);
     // println!("no_defines: {:?}", no_defines);
 
     if let Ok((rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {

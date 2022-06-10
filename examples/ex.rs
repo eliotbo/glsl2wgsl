@@ -325,7 +325,7 @@ void main() {
    texel(ch0, q);
    bof;
    texel(ch4, steve);
-   gold = t(GROSSE, big)
+   gold = t(GROSSE, big);
  }
 ";
 
@@ -336,7 +336,28 @@ const ONE_DEFINE: &str = "yaaaaa
 bbbbbbb
 ";
 
-const SEARCH: &str = "grodqoin( 4, wer) * qoin * tre(qwe)";
+
+
+const STREAMS: &str = "
+#define range(i,a,b) for(int i = a; i <= b; i++)
+
+
+void Simulation()
+{
+
+    range(i, -2, 2) range(j, -2, 2)
+    {
+        vec2 tpos = pos + vec2(i,j);
+
+    }
+
+}
+";
+
+// const SEARCH: &str = "(jfdone, gfdone, qwdone)";
+// const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
+
+//force calculation and integration
 
 // TODO: 
 // 3. 
@@ -353,26 +374,43 @@ fn main() {
   // let r = DEFINES_FUNC;
   // let r = ONE_DEFINE;
 
-  let mut buf = String::new();
-  let buf = func_definition_parser(&DEFINES_FUNC).unwrap().1;
+  let mut replaced_defines_func: String;
+  replaced_defines_func = func_definition_parser(&STREAMS).unwrap().1;
+
+  // let define_func = DefineFunc { 
+  //   name: "range".to_string(), 
+  //   args: vec!["i", "a", "b"].iter().map(|x| x.to_string()).collect(), 
+  //   replace_by: "for(int #arg_0 = #arg_1; #arg_0 <= #arg_2; #arg_0++)".to_string(), 
+  // };
+
+  // let ret = find_and_replace_single_define_func(&SEARCH, define_func).unwrap().1;
+  // let ret = function_call_args_anychar(SEARCH);
+
+  // println!("defines replaced: {:?}", ret);
+  // fs::write("./foo.txt", &ret).expect("Unable to write file");
+
   // if let Ok((rest, buf2)) = search_and_replace(SEARCH, "qoin".to_string(), "WER".to_string() ) {
     // if let Ok((rest, buf2)) = identifier("sdfsdf " ) {
       // println!("worked: {:?}", rest);
     // buf = buf2.to_string();
   // }
 
-  // let trans = syntax::TranslationUnit::parse(Span::new(r)).unwrap();
+  // println!("defines replaced: {:?}", replaced_defines_func);
+  // fs::write("./foo.txt", &replaced_defines_func).expect("Unable to write file");
+
+  let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
   
-  // show_translation_unit(&mut buf, &trans);
-  // buf = let2var_parser(&buf).unwrap().1;
-  // buf = uniform_vars_parser(&buf).unwrap().1;
-  // buf = definition_parser(&buf).unwrap().1;
-  // buf = replace_main_line(&buf).unwrap().1;
+  let mut buf: String = String::new();
+  show_translation_unit(&mut buf, &trans);
+  buf = let2var_parser(&buf).unwrap().1;
+  buf = uniform_vars_parser(&buf).unwrap().1;
+  buf = definition_parser(&buf).unwrap().1;
+  buf = replace_main_line(&buf).unwrap().1;
   
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   // println!("{:?}", trans);
-  println!("{:?}", buf);
+  // println!("{:?}", buf);
 
 
   // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
