@@ -181,6 +181,23 @@ pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
 //     )(i)
 // }
 
+pub fn search_and_replace_void(i: &str) -> ParserResult<String> {
+    map(
+        many_till(many_till(anychar, alt((tag("-> ()"), eof))), eof),
+        |x| {
+            //
+            let mut ret = "".to_string();
+            for (v_chars, _) in x.0.iter() {
+                ret.push_str(&v_chars.iter().collect::<String>());
+                // if name == &v {
+                //     ret.push_str(&num);
+                // }
+            }
+            ret
+        },
+    )(i)
+}
+
 // search (v, where v is an identifier) and replace by (num, which can be anychar)
 pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
     map(

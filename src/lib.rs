@@ -90,6 +90,7 @@ pub fn do_parse(x: String) -> String {
                 let unis = uniform_vars_parser(&lets.1).unwrap();
                 let defi = definition_parser(&unis.1).unwrap().1;
                 let upda = replace_main_line(&defi).unwrap().1;
+                let inout = replace_inouts(&upda).unwrap().1;
 
                 // show_translation_unit(&mut buf, &trans);
                 // buf = let2var_parser(&buf).unwrap().1;
@@ -99,8 +100,8 @@ pub fn do_parse(x: String) -> String {
 
                 // let private_vars = add_private_to_global_vars(&defi);
 
-                println!("{:?}", upda);
-                buf = upda;
+                println!("{:?}", inout);
+                buf = inout;
 
                 return buf;
             }

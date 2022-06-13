@@ -11,7 +11,7 @@ use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
-use glsl2wgsl::parse_func_defines::*;
+use glsl2wgsl::parse_func_defines::func_definition_parser;
 use glsl2wgsl::replace_inouts::*;
 
 use std::fs;
@@ -448,6 +448,7 @@ fn main() {
   buf = definition_parser(&buf).unwrap().1;
   buf = replace_main_line(&buf).unwrap().1;
   buf = replace_inouts(&buf).unwrap().1;
+  buf = search_and_replace_void(&buf).unwrap().1;
 
   // let buf = add_ptr_to_arg(BLAHBLAH).unwrap().1;
 
