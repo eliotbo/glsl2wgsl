@@ -16,15 +16,18 @@ pub mod transpiler;
 pub mod nom_helpers;
 pub mod parse_func_defines;
 pub mod replace_defines;
+pub mod replace_inouts;
 pub mod replace_main;
 pub mod replace_unis;
 
 use parse_func_defines::*;
 use replace_defines::*;
+use replace_inouts::*;
 use replace_unis::*;
 
 use let2var::let2var_parser;
 use parsers_span::Span;
+use replace_main::replace_main_line;
 
 #[wasm_bindgen]
 extern "C" {
@@ -86,10 +89,18 @@ pub fn do_parse(x: String) -> String {
                 let lets = let2var_parser(&buf).unwrap();
                 let unis = uniform_vars_parser(&lets.1).unwrap();
                 let defi = definition_parser(&unis.1).unwrap().1;
+                let upda = replace_main_line(&defi).unwrap().1;
+
+                // show_translation_unit(&mut buf, &trans);
+                // buf = let2var_parser(&buf).unwrap().1;
+                // buf = uniform_vars_parser(&buf).unwrap().1;
+                // buf = definition_parser(&buf).unwrap().1;
+                // buf = replace_main_line(&buf).unwrap().1;
+
                 // let private_vars = add_private_to_global_vars(&defi);
 
-                println!("{:?}", defi);
-                buf = defi;
+                println!("{:?}", upda);
+                buf = upda;
 
                 return buf;
             }

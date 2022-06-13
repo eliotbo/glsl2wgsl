@@ -1,11 +1,17 @@
-fn Simulation() -> () {
+func(a: f32, P: ptr<function, vec4<f32>>) -> () {
+	(*P).x = (*P).x + (1.);
 
-	for (var i: i32 = -2; i <= 2; i = i + 1) {
-	for (var j: i32 = -2; j <= 2; j = j + 1) {
-		let tpos: vec2<f32> = pos + vec2<f32>(i, j);
-	}
+		a = a + (1);
 
-	}
+			b = b + (1);
+	let a2: f32 = (*P).w;
 
+		c = c + (1);
+} 
+
+func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
+	(*wert) = 56;
+	(*a) = vec2<f32>(1., 1.);
+	c = 23;
 } 
 

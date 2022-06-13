@@ -37,7 +37,7 @@
 // #![crate_type = "dylib"]
 
 // #![no_std]
-use crate::nom_helpers::Span;
+// use crate::nom_helpers::Span;
 use crate::syntax;
 use core::fmt::Write;
 use itertools::Itertools;
@@ -725,7 +725,7 @@ where
 
     for qual_spec in qualifiers {
         let _ = f.write_str(" ");
-        show_type_qualifier_spec(f, qual_spec)
+        show_type_qualifier_spec(f, qual_spec);
     }
 }
 
@@ -756,7 +756,7 @@ where
             let _ = f.write_str("const");
         }
         syntax::StorageQualifier::InOut => {
-            let _ = f.write_str("inout");
+            let _ = f.write_str("inout ");
         }
         syntax::StorageQualifier::In => {
             let _ = f.write_str("");
@@ -1058,9 +1058,9 @@ where
 
         syntax::Expr::Assignment(ref v2, ref op2, ref e2) => {
             // Note: all assignment ops are right-to-left associative
-            let mut v = v2.clone();
-            let mut op = op2.clone();
-            let mut e = e2.clone();
+            let v = v2.clone();
+            let op = op2.clone();
+            let e = e2.clone();
 
             let mut swizzled = false;
             let mut left_variable = "variable_name".to_string();
@@ -1638,9 +1638,9 @@ where
         let _ = f.write_str("; ");
 
         if let syntax::SingleDeclaration {
-            ty: tt,
+            ty: _tt,
             name: Some(name),
-            array_specifier: aa,
+            array_specifier: _aa,
             initializer: Some(syntax::Initializer::Simple(ref e)),
         } = d.clone()
         {

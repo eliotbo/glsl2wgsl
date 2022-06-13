@@ -356,51 +356,121 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
     )(i)
 }
 
-pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserResult<String> {
-    let mut full_script = i.to_string();
-    for def in defs.iter() {
-        if let Ok((_, fs)) = find_and_replace_single_define_func(&full_script, def.clone()) {
-            full_script = fs;
+pub fn till_next_brace(i: &str) -> ParserResult<(String, String)> {
+    map(
+        many_till(anychar, alt((tag("{"), tag("}")))),
+        |(so_far, brack): (Vec<char>, &str)| {
+            //
+
+            let text = so_far.iter().collect::<String>();
+            return (text, brack.to_string());
+        },
+    )(i)
+}
+
+pub fn get_function_body(i: &str, mut scope: u32) -> ParserResult<(u32, String)> {
+    //
+    // let text_and_backet: ParserResult<(String, String)> = till_next_brace(i); // (scope, body_so_far)
+    let mut parsed_text: String = "".to_string();
+    let mut rest = i;
+    loop {
+        let (rest1, (text_so_far, brace)): (&str, (String, String)) = till_next_brace(rest)?;
+        rest = rest1;
+        parsed_text += &text_so_far;
+        parsed_text += &brace;
+
+        if brace == "{" {
+            scope += 1;
+        } else {
+            scope -= 1;
+        }
+        // println!("{} -> {}", brace, scope);
+
+        if scope == 0 {
+            break;
         }
     }
-    // println!("full_script : {:?}", full_script);
-    // println!("defs : {:?}", defs);
-    success(full_script)("")
 
-    // map(many0(construct_assignment_vars), |x2| {
-    //     //
-    //     "".to_string()
-    // })(i)
+    return Ok((rest, (0, parsed_text)));
 }
 
-// preceded( delimited(tag("#define "),  anychar_underscore,
-//     delimited(tag("("), many0(anychar), tag(")"))
-// ) )),
+pub fn check_inout_arg(i: &str) -> ParserResult<String> {
+    map(preceded(tag("inout "), anychar_underscore), |x| {
+        x.to_string()
+    })(i)
+}
 
-// TODO:
-// replace definition instances using the argument order
+// add type ptr<function, particle>
+pub fn add_ptr_to_arg(i: &str) -> ParserResult<String> {
+    map(
+        many_till(anychar, tag(": ")).and(many_till(anychar, eof)),
+        |((name, _), (vc, _))| {
+            let arg_name = name.iter().collect::<String>();
+            let type_name = vc.iter().collect::<String>();
+            return arg_name + ": ptr<function, " + &type_name + ">";
+        },
+    )(i)
+}
 
-pub fn func_definition_parser(i: &str) -> ParserResult<String> {
-    let (rest, define_funcs) = get_all_define_funcs(i)?;
-    println!("def : {:?}", define_funcs);
-    let (_, no_defines) = erase_all_func_defines(i)?;
-    // println!("define_funcs: {:?}", define_funcs);
-    // println!("no_defines: {:?}", no_defines);
+pub fn check_one_func(i: &str) -> ParserResult<String> {
+    let (_, arguments) = map(
+        peek(many_till(
+            anychar,
+            preceded(tag("fn "), identifier).and(function_call_args_anychar),
+        )),
+        |(s, (iden, args))| args,
+    )(i)?;
 
-    if let Ok((rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
-        return success(so_far)("");
+    // delete "inout" keywords and add type ptr<function, particle>,
+    let (rest, parsed_func_def) = map(
+        many_till(
+            anychar,
+            preceded(tag("fn "), identifier).and(function_call_args_anychar),
+        ),
+        |(before_func, (func_name, args))| {
+            //
+            let args_joined = args
+                .iter()
+                .map(|maybe_inout| {
+                    //
+                    if let Some(no_inout) = maybe_inout.strip_prefix("inout ") {
+                        let stripped_inout = no_inout.to_string();
+                        println!("stripped_inout: {}", stripped_inout);
+                        if let Ok((_, added_ptr_type)) = add_ptr_to_arg(&stripped_inout) {
+                            added_ptr_type
+                        } else {
+                            "ERROR: could not parser TYPE of inout arg".to_string()
+                        }
+                    } else {
+                        maybe_inout.to_string()
+                    }
+                })
+                .collect::<Vec<String>>()
+                .join(", ");
+            before_func.iter().collect::<String>() + &func_name + "(" + &args_joined + ")"
+        },
+    )(i)?;
+
+    // println!("parsed: {:?}", parsed_func_def);
+
+    let (rest, (_, mut body)) = get_function_body(rest, 0)?;
+
+    println!("arguments: {:?}", arguments);
+    for arg in arguments.iter() {
+        if let Ok((_, inout_arg_name)) = check_inout_arg(arg) {
+            let ptr = "(*".to_string() + &inout_arg_name + ")";
+            if let Ok((_, body2)) = search_and_replace_identifier(&body, inout_arg_name, ptr) {
+                body = body2;
+            }
+        }
     }
 
-    success("".to_string())("")
+    return Ok((rest, parsed_func_def.to_string() + &body));
 }
 
-// pub fn func_definition_parser(i: &str) -> ParserResult<String> {
-//     map(
-//         get_all_define_funcs.and(many_till(anychar, eof)),
-//         |(mut replaced_definitions, (rest, _))| {
-//             let rest_of_script: String = rest.iter().collect();
-//             replaced_definitions.push_str(&rest_of_script);
-//             replaced_definitions
-//         },
-//     )(i)
-// }
+pub fn replace_inouts(i: &str) -> ParserResult<String> {
+    map(
+        many0(check_one_func).and(many_till(anychar, eof)),
+        |(vec_parsed, rest)| vec_parsed.join("") + &rest.0.iter().collect::<String>(),
+    )(i)
+}

@@ -12,6 +12,7 @@ use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
 use glsl2wgsl::parse_func_defines::*;
+use glsl2wgsl::replace_inouts::*;
 
 use std::fs;
 
@@ -353,7 +354,32 @@ void Simulation()
 
 }
 ";
+// 
+const INOUT: &str = "
+void func(float a, inout vec4 P)
+{
+   P.x += 1.0;
+   {
+      a += 1; 
+      {
+        b += 1;
+      }
+   }
+   float a2 = P.w;
+   {
+     c +=1;
+   }
+}
 
+float func2(float c, inout vec4 wert, inout float a)
+{
+ wert = 56;
+ a = vec2(1,1);
+ c = 23;
+}";
+
+
+// const BLAHBLAH: &str = "P: vec4<f32>";
 // const SEARCH: &str = "(jfdone, gfdone, qwdone)";
 // const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
 
@@ -368,14 +394,27 @@ void Simulation()
 
 // 7. inout
 
+// 7.5 void -> ()
+
 // 8. replace keywords: texelFetch, texture
+
+// 9. remove -> ()
+
+// 10. let2var should include name.blah = ...
+
+// 11. if statements that are a single line
+
+// 12. var<private> when the var is not initialized with a value, but "let" when
+// there is a value
+
+// 13. maybe implement references for inout
 
 fn main() {
   // let r = DEFINES_FUNC;
   // let r = ONE_DEFINE;
 
   let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&STREAMS).unwrap().1;
+  replaced_defines_func = func_definition_parser(&INOUT).unwrap().1;
 
   // let define_func = DefineFunc { 
   //   name: "range".to_string(), 
@@ -398,6 +437,8 @@ fn main() {
   // println!("defines replaced: {:?}", replaced_defines_func);
   // fs::write("./foo.txt", &replaced_defines_func).expect("Unable to write file");
 
+
+
   let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
   
   let mut buf: String = String::new();
@@ -406,11 +447,33 @@ fn main() {
   buf = uniform_vars_parser(&buf).unwrap().1;
   buf = definition_parser(&buf).unwrap().1;
   buf = replace_main_line(&buf).unwrap().1;
+  buf = replace_inouts(&buf).unwrap().1;
+
+  // let buf = add_ptr_to_arg(BLAHBLAH).unwrap().1;
+
+
+
+  // let buf = check_one_func(&buf).unwrap().1;
   
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
   // println!("{:?}", trans);
-  // println!("{:?}", buf);
+  println!("{:?}", buf);
+
+
+// pub fn check_all_funcs(i: &str) -> ParserResult<String> {
+//     map(
+//         many_till(
+//             anychar,
+//             delimited(tag("fn "), identifier, function_call_args_anychar),
+//         ),
+//         |(s, q)| s.iter().collect::<String>(),
+//     )(i)
+// }
+
+// pub fn replace_inouts(i: &str) -> ParserResult<String> {
+//     check_all_funcs(i)
+// }
 
 
   // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
