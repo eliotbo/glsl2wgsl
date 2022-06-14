@@ -1600,7 +1600,12 @@ where
 
     if let Some(ref name) = d.name {
         if !nolet {
-            let _ = f.write_str("let ");
+            if let Some(_) = d.initializer {
+                let _ = f.write_str("let ");
+            } else if i == 0 {
+                // if the scope is global, use var<private>
+                let _ = f.write_str("var<private> ");
+            }
         }
         show_identifier(f, name);
 

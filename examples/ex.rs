@@ -331,12 +331,6 @@ void main() {
  }
 ";
 
-const ONE_DEFINE: &str = "yaaaaa 
-#define texel(ax, p) texelFetch(ax, Bi(p), ax)
-#define q 12
-#define q t(q)
-bbbbbbb
-";
 
 
 
@@ -381,39 +375,7 @@ float func2(float c, inout vec4 wert, inout float a)
  c = 23;
 }";
 
-
-
-// const BLAHBLAH: &str = "P: vec4<f32>";
-// const SEARCH: &str = "(jfdone, gfdone, qwdone)";
-// const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
-
-//force calculation and integration
-
-// TODO: 
-// 3. 
-// #define T(p) texelFetch(iChannel0, ivec2(mod(p,R)), 0) 
-// #define P(p) texture(iChannel0, mod(p,R)/R)
-// #define C(p) texture(iChannel1, mod(p,R)/R)
-// they because variations on textureLoad(buffer, location)
-
-
-
-// 8. replace keywords: texelFetch, texture
-//    textureLoad(ch, vec2<i32>(tpos)) ;
-
-// 9. remove -> ()
-
-// 10. let2var should include name.blah = ...
-
-// 11. if statements that are a single line
-
-// 12. var<private> when the var is not initialized with a value, but "let" when
-// there is a value
-
-// 13. maybe implement references for inout
-
-const DEFINES_FUNC_BUG: &str = "
-#define to(pk, l) q(15, pk)
+const TEXEL_FETCH: &str = "
 void main() {
    float a = to(23, ve(a(2), b(6), c(5)));
    vec4 wqe = texelFetch(ch0, q);
@@ -423,10 +385,48 @@ void main() {
  }
 ";
 
+const ONE_DEFINE: &str = "
+#define texel(ax, p) texelFetch(ax, Bi(p), ax)
+#define q 12
+#define qw t(q)
+float q;
+float q = 3;
+
+";
+
+// const BLAHBLAH: &str = "P: vec4<f32>";
+// const SEARCH: &str = "(jfdone, gfdone, qwdone)";
+// const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
+
+//force calculation and integration
+
+// TODO: 
+
+// 10. let2var should include name.blah = ...
+
+// 11. if statements that are a single line
+
+// 12. var<private> when the var is not initialized with a value, but "let" when
+// there is a value
+
+
+const LET_VS_VARPRIVATE: &str = "
+float q;
+#define q 12
+float q = 1;
+void main() {
+
+// q = 4;
+  }
+";
+
+
+
+
 fn main() {
 
   let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&MAIN_FUNC).unwrap().1;
+  replaced_defines_func = func_definition_parser(&LET_VS_VARPRIVATE).unwrap().1;
 
   // println!("{:?}", replaced_defines_func);
 
@@ -446,7 +446,7 @@ fn main() {
   // let buf = replace_all_texture_and_texel_fetch(&DEFINES_FUNC_BUG).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  // println!("{:?}", trans);
+  println!("{:?}", trans);
   println!("{:?}", buf);
 
 
