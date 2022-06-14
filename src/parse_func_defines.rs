@@ -30,6 +30,8 @@ pub use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
+const ALPHANUM_UNDER: &str = "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+
 fn identifier_hashtag(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_' || ch == '#'
 }

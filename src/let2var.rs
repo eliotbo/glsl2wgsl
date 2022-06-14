@@ -5,15 +5,27 @@
 //! name but different scopes, they will be considered as the same
 //! variable.
 
+// use nom::branch::alt;
+// use nom::bytes::complete::{tag, take_until, take_while1};
+// use nom::character::complete::{anychar, char, digit1, line_ending, multispace1, space0, space1};
+// use nom::character::{is_hex_digit, is_oct_digit};
+// use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
+// use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
+// use nom::multi::{fold_many0, many0, many1, many_till, separated_list0};
+// use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+use nom::Parser;
+
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_until, take_while1};
-use nom::character::complete::{anychar, char, digit1, line_ending, multispace1, space0, space1};
+use nom::bytes::complete::{is_not, tag, take_until, take_while1};
+use nom::character::complete::{
+    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
+    space0, space1,
+};
 use nom::character::{is_hex_digit, is_oct_digit};
 use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
 use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{fold_many0, many0, many1, many_till, separated_list0};
+use nom::multi::{count, fold_many0, many0, many0_count, many1, many_till, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
-use nom::Parser;
 // use nom::{Err as NomErr, ParseTo};
 use core::num::ParseIntError;
 use nom::{Err as NomErr, IResult};
@@ -226,13 +238,108 @@ pub fn get_named_var(i: &str) -> ParserResult<String> {
     )(i)
 }
 
+pub fn identifier(input: &str) -> ParserResult<&str> {
+    map(
+        recognize(pair(
+            alt((alpha1, tag("_"))),
+            many0(alt((alphanumeric1, tag("_")))),
+        ))
+        // make sure the next character is not part of the identifier
+        .and(peek(verify(anychar, |x| !x.is_alphanumeric()))),
+        |x: (&str, char)| {
+            let ret = x.0;
+            ret
+        },
+    )(input)
+}
+
+// // search (v, where v is an identifier) and replace by (num, which can be anychar)
+// pub fn search_for_v2(i: &str, v: String) -> ParserResult<bool> {
+//     // search for next instance of v
+//     let x = opt(many_till(anychar, verify(identifier, |x| x == v)))(i)?;
+
+//     if let (rest, Some((v_chars, _name))) = x {
+//         let y = opt(many_till(anychar, tag(" = ")))(rest)?;
+//         if let (_, Some(_)) = y {
+//             return success(true)(rest);
+//         } else {
+//             return success(false)("");
+//         }
+//     } else {
+//         return success(false)("");
+//     }
+// }
+
+// pub fn full_identifier(i: &str) -> ParserResult<String> {
+//     let (rest, iden) = preceded(
+//         verify(count(anychar, 1), |cs: Vec<char>| {
+//             let c = cs.iter().last().unwrap();
+//             !c.is_alphanumeric() && !(c == &'_')
+//         }),
+//         identifier,
+//     )(i)?;
+//     // let ret = x.1.to_owned();
+//     return Ok((rest, iden.to_owned()));
+// }
+
+const ALPHANUM_UNDER: &str = "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+
+// pub fn search_for_full_identifier(i: &str, v: String) -> ParserResult<bool> {
+//     let x = opt(many_till(
+//         anychar,
+//         verify(preceded(is_not(ALPHANUM_UNDER), identifier), |x| x == v),
+//     ))(i)?;
+
+//     if let (rest, Some(_)) = x {
+//         let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
+//         let rest_of_line = rest_of_line.iter().collect::<String>();
+
+//         let y: ParserResult<Option<(Vec<char>, &str)>> =
+//             opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
+
+//         if let Ok((_, Some(_))) = y {
+//             return success(true)(rest2);
+//         }
+//     }
+
+//     return success(false)(i);
+// }
+
+pub fn search_for_full_identifier<'a, 'b>(
+    s: &'b str,
+) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
+    move |i: &str| {
+        let x = opt(many_till(
+            anychar,
+            verify(preceded(is_not(ALPHANUM_UNDER), identifier), |x: &str| {
+                x == s
+            }),
+        ))(i)?;
+
+        if let (rest, Some(_)) = x {
+            let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
+            let rest_of_line = rest_of_line.iter().collect::<String>();
+
+            let y: ParserResult<Option<(Vec<char>, &str)>> =
+                opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
+
+            if let Ok((_, Some(_))) = y {
+                return success(true)(rest2);
+            }
+        }
+
+        return success(false)(i);
+    }
+}
+
 pub fn decl_is_reassigned(i: &str) -> ParserResult<bool> {
     let pair = map(get_named_var, |x| x)(i)?;
 
     let rest0: &str = pair.0;
     let mut name: String = pair.1;
-    name.push_str(" = ");
-    let z: ParserResult<bool> = map(peek(is_repeated(&name)), |x| x)(rest0);
+    // name.push_str(" = ");
+    // let z: ParserResult<bool> = map(peek(is_repeated(&name)), |x| x)(rest0);
+    let z: ParserResult<bool> = map(peek(search_for_full_identifier(&name)), |x| x)(rest0);
     return z;
 }
 
@@ -262,6 +369,8 @@ pub fn replace_1_let(i: &str) -> ParserResult<String> {
 pub fn replace_all_let(i: &str) -> ParserResult<String> {
     map(many0(replace_1_let), |x2| x2.join(""))(i)
 }
+
+// TODO: match
 
 pub fn let2var_parser(i: &str) -> ParserResult<String> {
     map(

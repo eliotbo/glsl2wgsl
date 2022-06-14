@@ -6,7 +6,7 @@ use glsl2wgsl::nom_helpers::Span;
 use glsl2wgsl::syntax;
 // use glsl::*;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
-use glsl2wgsl::let2var::let2var_parser;
+use glsl2wgsl::let2var::{let2var_parser, search_for_full_identifier};
 use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
@@ -394,6 +394,16 @@ float q = 3;
 
 ";
 
+const LET_VS_VARPRIVATE: &str = "
+float q;
+#define q 12
+float q = 1;
+void main() {
+
+// q = 4;
+  }
+";
+
 // const BLAHBLAH: &str = "P: vec4<f32>";
 // const SEARCH: &str = "(jfdone, gfdone, qwdone)";
 // const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
@@ -406,47 +416,41 @@ float q = 3;
 
 // 11. if statements that are a single line
 
-// 12. var<private> when the var is not initialized with a value, but "let" when
-// there is a value
 
+const VAR_DOT: &str = "
 
-const LET_VS_VARPRIVATE: &str = "
-float q;
-#define q 12
-float q = 1;
 void main() {
-
-// q = 4;
-  }
+  let aj = 4;
+  aj.xy = 5;
+}
 ";
-
-
-
 
 fn main() {
 
-  let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&LET_VS_VARPRIVATE).unwrap().1;
+  // let mut replaced_defines_func: String;
+  // replaced_defines_func = func_definition_parser(&VAR_DOT).unwrap().1;
 
-  // println!("{:?}", replaced_defines_func);
+  // // println!("{:?}", replaced_defines_func);
 
-  let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
+  // let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
   
-  let mut buf: String = String::new();
-  show_translation_unit(&mut buf, &trans);
-  buf = let2var_parser(&buf).unwrap().1;
-  buf = uniform_vars_parser(&buf).unwrap().1;
-  buf = definition_parser(&buf).unwrap().1;
-  buf = replace_main_line(&buf).unwrap().1;
-  buf = replace_inouts(&buf).unwrap().1;
-  buf = search_and_replace_void(&buf).unwrap().1;
-  buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
+  // let mut buf: String = String::new();
+  // show_translation_unit(&mut buf, &trans);
+  // buf = let2var_parser(&buf).unwrap().1;
+  // buf = uniform_vars_parser(&buf).unwrap().1;
+  // buf = definition_parser(&buf).unwrap().1;
+  // buf = replace_main_line(&buf).unwrap().1;
+  // buf = replace_inouts(&buf).unwrap().1;
+  // buf = search_and_replace_void(&buf).unwrap().1;
+  // buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
 
+  let buf = let2var_parser(&VAR_DOT).unwrap().1;
+  // let buf = search_for_full_identifier(&"aj")(&VAR_DOT).unwrap().1;
 
   // let buf = replace_all_texture_and_texel_fetch(&DEFINES_FUNC_BUG).unwrap().1;
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  println!("{:?}", trans);
+  // println!("{:?}", trans);
   println!("{:?}", buf);
 
 
@@ -459,6 +463,31 @@ fn main() {
   // assert_eq!(&do_parse(ARRAYED_DECLARATION), "norm(po: vec3<f32>) -> () {\n\tlet r: f32 = 2.;\n\tlet e: f32 = 1.;\n}\n\n");
   // assert_eq!(&do_parse(MULTI_DECLARATION), "norm(po: vec3<f32>) -> () {\n    if (r.x>d.x) {\nr = d;\n}\n}\n");
 }
+
+// // search (v, where v is an identifier) and replace by (num, which can be anychar)
+// pub fn search_for_v(i: &str, v: String) -> ParserResult<bool> {
+//     // search for next instance of v
+//     let x = opt(many_till(
+//         anychar,
+//         verify(
+//             // preceded(not(count(alt((alphanumeric1, tag("_"))), 1)), identifier),
+//             // preceded(tag("\t"), identifier),
+//             identifier,
+//             |x| x == v,
+//         ),
+//     ))(i)?;
+
+//     if let (rest, Some((v_chars, _name))) = x {
+//         // make sure the the identifier is preceded by a non-identifier character
+
+//         let y = opt(many_till(anychar, tag(" = ")))(rest)?;
+//         if let (_, Some(_)) = y {
+//             return success(true)(rest);
+//         }
+//     }
+
+//     return success(false)("");
+// }
 
 // pub fn check_all_funcs(i: &str) -> ParserResult<String> {
 //     map(

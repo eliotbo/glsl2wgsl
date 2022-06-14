@@ -1,7 +1,6 @@
-var<private> q: f32;
-var<private> q = 12;
 
-let q: f32 = 1.;
-main()  {
-} 
 
+void main() {
+  var aj = 4;
+  aj.xy = 5;
+}
