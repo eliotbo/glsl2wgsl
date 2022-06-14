@@ -116,14 +116,41 @@ pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-// TODO: make argument detection more robust with parenthesis
-// tracking ((())), since argument can have parentheses and
-// commas in them
+pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
+    map(
+        many_till(anychar, alt((tag("("), tag(")"), tag(",")))),
+        |(so_far, brack): (Vec<char>, &str)| {
+            //
+            let text = so_far.iter().collect::<String>();
+            return (text, brack.to_string());
+        },
+    )(i)
+}
+
 pub fn argument1(i: &str) -> ParserResult<String> {
-    map(many_till(anychar, peek(one_of(",)"))), |x| {
-        x.0.iter().collect::<String>()
-        // &s
-    })(i)
+    let mut parsed_text: String = "".to_string();
+    let mut scope = 1;
+    let mut rest = i;
+    loop {
+        let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
+            till_next_paren_or_comma(rest)?;
+        rest = rest1;
+        parsed_text += &(text_so_far + &paren_or_comma);
+
+        match paren_or_comma.as_str() {
+            "(" => scope += 1,
+
+            ")" => scope -= 1,
+
+            _ => {} // case of a comma
+        }
+
+        if scope == 0 {
+            break;
+        }
+    }
+
+    return Ok((rest, parsed_text));
 }
 
 pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
@@ -154,32 +181,6 @@ pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
         |x| x,
     )(i)
 }
-
-// // search (v, where v is an identifier) and replace by (num, which can be anychar)
-// pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
-//     map(
-//         many_till(
-//             many_till(
-//                 anychar,
-//                 // alt((tag(&*v), eof)),
-//                 // verify(identifier, |(x, id)| x.to_string() == v),
-//                 // alt(identifier_check(v.to_string())),
-//                 alt((verify(identifier, |x| x == v), eof)),
-//             ),
-//             eof,
-//         ),
-//         |x| {
-//             // makes sure that the identifier does not have any other alphanum characters
-//             // before and after it
-//             let mut ret = "".to_string();
-//             for (v_chars, _name) in x.0.iter() {
-//                 ret.push_str(&v_chars.iter().collect::<String>());
-//                 ret.push_str(&num);
-//             }
-//             ret
-//         },
-//     )(i)
-// }
 
 // search (v, where v is an identifier) and replace by (num, which can be anychar)
 pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {

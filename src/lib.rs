@@ -18,11 +18,13 @@ pub mod parse_func_defines;
 pub mod replace_defines;
 pub mod replace_inouts;
 pub mod replace_main;
+pub mod replace_texel_fetch;
 pub mod replace_unis;
 
 use parse_func_defines::*;
 use replace_defines::*;
-use replace_inouts::*;
+use replace_inouts::{replace_inouts, search_and_replace_void};
+use replace_texel_fetch::replace_all_texture_and_texel_fetch;
 use replace_unis::*;
 
 use let2var::let2var_parser;
@@ -91,6 +93,9 @@ pub fn do_parse(x: String) -> String {
                 let defi = definition_parser(&unis.1).unwrap().1;
                 let upda = replace_main_line(&defi).unwrap().1;
                 let inout = replace_inouts(&upda).unwrap().1;
+                //
+                buf = search_and_replace_void(&buf).unwrap().1;
+                buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
 
                 // show_translation_unit(&mut buf, &trans);
                 // buf = let2var_parser(&buf).unwrap().1;

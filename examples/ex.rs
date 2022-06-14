@@ -12,7 +12,8 @@ use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
 use glsl2wgsl::parse_func_defines::func_definition_parser;
-use glsl2wgsl::replace_inouts::*;
+use glsl2wgsl::replace_inouts::{search_and_replace_void, replace_inouts};
+use glsl2wgsl::replace_texel_fetch::*;
 
 use std::fs;
 
@@ -339,6 +340,8 @@ bbbbbbb
 
 
 
+
+
 const STREAMS: &str = "
 #define range(i,a,b) for(int i = a; i <= b; i++)
 
@@ -379,6 +382,7 @@ float func2(float c, inout vec4 wert, inout float a)
 }";
 
 
+
 // const BLAHBLAH: &str = "P: vec4<f32>";
 // const SEARCH: &str = "(jfdone, gfdone, qwdone)";
 // const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
@@ -392,11 +396,10 @@ float func2(float c, inout vec4 wert, inout float a)
 // #define C(p) texture(iChannel1, mod(p,R)/R)
 // they because variations on textureLoad(buffer, location)
 
-// 7. inout
 
-// 7.5 void -> ()
 
 // 8. replace keywords: texelFetch, texture
+//    textureLoad(ch, vec2<i32>(tpos)) ;
 
 // 9. remove -> ()
 
@@ -409,12 +412,77 @@ float func2(float c, inout vec4 wert, inout float a)
 
 // 13. maybe implement references for inout
 
+const DEFINES_FUNC_BUG: &str = "
+#define to(pk, l) q(15, pk)
+void main() {
+   float a = to(23, ve(a(2), b(6), c(5)));
+   vec4 wqe = texelFetch(ch0, q);
+   vec4 wqe = texture(ch0, q / R);
+    vec4 wqe = texture(ch0, q / R);
+    vec4 wqe = texelFetch(ch0, q);
+ }
+";
+
 fn main() {
-  // let r = DEFINES_FUNC;
-  // let r = ONE_DEFINE;
 
   let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&INOUT).unwrap().1;
+  replaced_defines_func = func_definition_parser(&MAIN_FUNC).unwrap().1;
+
+  // println!("{:?}", replaced_defines_func);
+
+  let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
+  
+  let mut buf: String = String::new();
+  show_translation_unit(&mut buf, &trans);
+  buf = let2var_parser(&buf).unwrap().1;
+  buf = uniform_vars_parser(&buf).unwrap().1;
+  buf = definition_parser(&buf).unwrap().1;
+  buf = replace_main_line(&buf).unwrap().1;
+  buf = replace_inouts(&buf).unwrap().1;
+  buf = search_and_replace_void(&buf).unwrap().1;
+  buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
+
+
+  // let buf = replace_all_texture_and_texel_fetch(&DEFINES_FUNC_BUG).unwrap().1;
+  fs::write("./foo.txt", &buf).expect("Unable to write file");
+  
+  // println!("{:?}", trans);
+  println!("{:?}", buf);
+
+
+  // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
+  // assert_eq!(&do_parse(CONST), "const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);\n");
+  // assert_eq!(&do_parse(FUNC_PROTO), "norm(po: vec3<f32>) -> vec3<f32> {\n}\n\nnorm2(wq: vec2<f32>) -> vec2<f32> {\n}\n\n");
+  // assert_eq!(&do_parse(FUNC_PROTO_CONTENT),"norm(po: vec3<f32>) -> vec3<f32> {\n\tlet what: i32 = 3;\n\tlet a: i32 = 2;\n\treturn what;\n}\n\n");
+  // assert_eq!(&do_parse(ASSIGN_OP), ASSIGN_OP_WGSL);
+  // assert_eq!(&do_parse(FOR_LOOP), "main() -> () {\n\tfor (let i: i32 = 0; i<120; i = i + 1) {\n\t\ta = 3;\n\t}\n}\n\n");
+  // assert_eq!(&do_parse(ARRAYED_DECLARATION), "norm(po: vec3<f32>) -> () {\n\tlet r: f32 = 2.;\n\tlet e: f32 = 1.;\n}\n\n");
+  // assert_eq!(&do_parse(MULTI_DECLARATION), "norm(po: vec3<f32>) -> () {\n    if (r.x>d.x) {\nr = d;\n}\n}\n");
+}
+
+// pub fn check_all_funcs(i: &str) -> ParserResult<String> {
+//     map(
+//         many_till(
+//             anychar,
+//             delimited(tag("fn "), identifier, function_call_args_anychar),
+//         ),
+//         |(s, q)| s.iter().collect::<String>(),
+//     )(i)
+// }
+
+// pub fn replace_inouts(i: &str) -> ParserResult<String> {
+//     check_all_funcs(i)
+// }
+
+
+// fn do_parse(x: &str) -> String {
+//   let trans = syntax::TranslationUnit::parse(Span::new(x)).unwrap();
+//   let mut buf = String::new();
+  
+//   show_translation_unit(&mut buf, &trans);
+//   return buf
+//   // fs::write("./foo.txt", &buf).expect("Unable to write file");
+// }
 
   // let define_func = DefineFunc { 
   //   name: "range".to_string(), 
@@ -436,62 +504,3 @@ fn main() {
 
   // println!("defines replaced: {:?}", replaced_defines_func);
   // fs::write("./foo.txt", &replaced_defines_func).expect("Unable to write file");
-
-
-
-  let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
-  
-  let mut buf: String = String::new();
-  show_translation_unit(&mut buf, &trans);
-  buf = let2var_parser(&buf).unwrap().1;
-  buf = uniform_vars_parser(&buf).unwrap().1;
-  buf = definition_parser(&buf).unwrap().1;
-  buf = replace_main_line(&buf).unwrap().1;
-  buf = replace_inouts(&buf).unwrap().1;
-  buf = search_and_replace_void(&buf).unwrap().1;
-
-  // let buf = add_ptr_to_arg(BLAHBLAH).unwrap().1;
-
-
-
-  // let buf = check_one_func(&buf).unwrap().1;
-  
-  fs::write("./foo.txt", &buf).expect("Unable to write file");
-  
-  // println!("{:?}", trans);
-  println!("{:?}", buf);
-
-
-// pub fn check_all_funcs(i: &str) -> ParserResult<String> {
-//     map(
-//         many_till(
-//             anychar,
-//             delimited(tag("fn "), identifier, function_call_args_anychar),
-//         ),
-//         |(s, q)| s.iter().collect::<String>(),
-//     )(i)
-// }
-
-// pub fn replace_inouts(i: &str) -> ParserResult<String> {
-//     check_all_funcs(i)
-// }
-
-
-  // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");
-  // assert_eq!(&do_parse(CONST), "const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);\n");
-  // assert_eq!(&do_parse(FUNC_PROTO), "norm(po: vec3<f32>) -> vec3<f32> {\n}\n\nnorm2(wq: vec2<f32>) -> vec2<f32> {\n}\n\n");
-  // assert_eq!(&do_parse(FUNC_PROTO_CONTENT),"norm(po: vec3<f32>) -> vec3<f32> {\n\tlet what: i32 = 3;\n\tlet a: i32 = 2;\n\treturn what;\n}\n\n");
-  // assert_eq!(&do_parse(ASSIGN_OP), ASSIGN_OP_WGSL);
-  // assert_eq!(&do_parse(FOR_LOOP), "main() -> () {\n\tfor (let i: i32 = 0; i<120; i = i + 1) {\n\t\ta = 3;\n\t}\n}\n\n");
-  // assert_eq!(&do_parse(ARRAYED_DECLARATION), "norm(po: vec3<f32>) -> () {\n\tlet r: f32 = 2.;\n\tlet e: f32 = 1.;\n}\n\n");
-  // assert_eq!(&do_parse(MULTI_DECLARATION), "norm(po: vec3<f32>) -> () {\n    if (r.x>d.x) {\nr = d;\n}\n}\n");
-}
-
-// fn do_parse(x: &str) -> String {
-//   let trans = syntax::TranslationUnit::parse(Span::new(x)).unwrap();
-//   let mut buf = String::new();
-  
-//   show_translation_unit(&mut buf, &trans);
-//   return buf
-//   // fs::write("./foo.txt", &buf).expect("Unable to write file");
-// }

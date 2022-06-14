@@ -1,17 +1,16 @@
-func(a: f32, P: ptr<function, vec4<f32>>)  {
-	(*P).x = (*P).x + (1.);
-
-		a = a + (1);
-
-			b = b + (1);
-	let a2: f32 = (*P).w;
-
-		c = c + (1);
+bah(U: vec4<f32>, pos: vec2<f32>)  {
+	a = 5;
 } 
 
-func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
-	(*wert) = 56;
-	(*a) = vec2<f32>(1., 1.);
-	c = 23;
+[[stage(compute), workgroup_size(8, 8, 1)]]
+update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
+    let R: vec2<f32> = uni.iResolution.xy;
+    let y_inverted_location = vec2<i32>(i32(invocation_id.x), i32(R.y) - i32(invocation_id.y));
+    let location = vec2<i32>(i32(invocation_id.x), i32(invocation_id.y));
+    
+	var U: vec4<f32>;
+	var pos = vec2<f32>(f32(location.x), f32(location.y) );
+
+	a = 5;
 } 
 
