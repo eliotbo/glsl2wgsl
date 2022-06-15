@@ -282,7 +282,7 @@ pub fn identifier(input: &str) -> ParserResult<&str> {
 //     return Ok((rest, iden.to_owned()));
 // }
 
-const ALPHANUM_UNDER: &str = "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
+const ALPHANUM_UNDER: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
 
 // pub fn search_for_full_identifier(i: &str, v: String) -> ParserResult<bool> {
 //     let x = opt(many_till(
@@ -316,7 +316,8 @@ pub fn search_for_full_identifier<'a, 'b>(
             }),
         ))(i)?;
 
-        if let (rest, Some(_)) = x {
+        if let (rest, Some((_, name))) = x {
+            println!("{}", name);
             let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
             let rest_of_line = rest_of_line.iter().collect::<String>();
 
@@ -333,13 +334,13 @@ pub fn search_for_full_identifier<'a, 'b>(
 }
 
 pub fn decl_is_reassigned(i: &str) -> ParserResult<bool> {
-    let pair = map(get_named_var, |x| x)(i)?;
+    let (rest, name) = map(get_named_var, |x| x)(i)?;
 
-    let rest0: &str = pair.0;
-    let mut name: String = pair.1;
+    // let rest0: &str = pair.0;
+    // let mut name: String = pair.1;
     // name.push_str(" = ");
     // let z: ParserResult<bool> = map(peek(is_repeated(&name)), |x| x)(rest0);
-    let z: ParserResult<bool> = map(peek(search_for_full_identifier(&name)), |x| x)(rest0);
+    let z: ParserResult<bool> = map(peek(search_for_full_identifier(&name)), |x| x)(rest);
     return z;
 }
 

@@ -1,6 +1,4 @@
+norm(po: vec3<f32>)  {
+	if (r.x > d.x) { r = d; }
+} 
 
-
-void main() {
-  var aj = 4;
-  aj.xy = 5;
-}

@@ -498,8 +498,10 @@ TranslationUnit(
                                 }, 
                                 ident: ArrayedIdentifier { 
                                     ident: Identifier("pos"), 
-                                    array_spec: None } })] }, 
-                                    statement: CompoundStatement { statement_list: [] } })]))
+                                    array_spec: None } 
+                            })] 
+                }, 
+                statement: CompoundStatement { statement_list: [] } })]))
 
 TranslationUnit(
     NonEmpty([
@@ -527,3 +529,87 @@ TranslationUnit(
                         Identifier(Identifier("P")), 
                         [Variable(Identifier("ch0"))]
 ))))] } })]))
+
+
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("func"), 
+                    parameters: [
+                        Named(Some(
+                            TypeQualifier { 
+                                qualifiers: NonEmpty([Storage(InOut)]) }
+                            ), 
+                            FunctionParameterDeclarator { 
+                                ty: TypeSpecifier { 
+                                    ty: Float, 
+                                    array_specifier: None 
+                                }, 
+                                ident: ArrayedIdentifier { 
+                                    ident: Identifier("P"), 
+                                    array_spec: None } })] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [
+                        Simple(Expression(
+                            Some(Assignment(Dot(Variable(Identifier("P")), 
+                            Identifier("x")
+                        ), 
+                        Add, FloatConst(1.0)))))] } })]))
+
+// var<private, _>
+TranslationUnit(NonEmpty([
+    Declaration(
+        InitDeclaratorList(
+            InitDeclaratorList { 
+                head: SingleDeclaration { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Float, 
+                            array_specifier: None } 
+                    }, 
+                    name: Some(Identifier("q")), 
+                    array_specifier: None, 
+                    initializer: None }, 
+                tail: [] })), 
+        FunctionDefinition(FunctionDefinition { prototype: FunctionPrototype { ty: FullySpecifiedType { qualifier: None, ty: TypeSpecifier { ty: Void, array_specifier: None } }, name: Identifier("main"), parameters: [] }, statement: CompoundStatement { statement_list: [] } })]))
+
+
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("norm"), 
+                    parameters: [Named(None, FunctionParameterDeclarator { 
+                        ty: TypeSpecifier { ty: Vec3, array_specifier: None }, 
+                        ident: ArrayedIdentifier { ident: Identifier("po"), array_spec: None } 
+                    })] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [
+                        Simple(Selection(SelectionStatement { cond: Binary(
+                            GT, 
+                            Dot(Variable(Identifier("r")), Identifier("x")),
+                            Dot(Variable(Identifier("d")), Identifier("x"))
+                        ), 
+                        rest: Statement(Simple(Expression(Some(Assignment(
+                            Variable(Identifier("r")), 
+                            Equal, 
+                            Variable(Identifier("d"))
+            ))))) }))] } })]))

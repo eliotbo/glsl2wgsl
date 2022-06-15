@@ -75,6 +75,22 @@ const float yaa[2] = float[2](5.5, 8.7);
 ";
 
 #[allow(dead_code)]  
+const IF: &str = 
+"void norm(vec3 po) {
+  if (r.x > d.x)  { 
+    r = d;
+    t =3;
+  }
+}";
+
+#[allow(dead_code)]  
+const IF_SINGLE: &str = 
+"void norm(vec3 po) {
+  if (r.x > d.x)  r = d;
+  
+}";
+
+#[allow(dead_code)]  
 const SIMPLE_VEC2: &str = 
 "vec2 e = vec2(3.0);
 float b = 1.0;";
@@ -129,11 +145,6 @@ const IF_ELSE: &str =
 
 }";
 
-#[allow(dead_code)]  
-const IF: &str = 
-"void norm(vec3 po) {
-  if (r.x > d.x) r = d;
-}";
 
 #[allow(dead_code)]  
 const IN_OUT: &str = "void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -404,53 +415,44 @@ void main() {
   }
 ";
 
-// const BLAHBLAH: &str = "P: vec4<f32>";
-// const SEARCH: &str = "(jfdone, gfdone, qwdone)";
-// const SEARCH: &str = "grodqoin( 4, wer) * range(j, -2, 2)";
-
-//force calculation and integration
-
-// TODO: 
-
-// 10. let2var should include name.blah = ...
-
-// 11. if statements that are a single line
-
-
 const VAR_DOT: &str = "
-
+ float t = 1;
 void main() {
-  let aj = 4;
-  aj.xy = 5;
+  float atj = 4;
+  atj.xy = 5;
 }
 ";
 
+
 fn main() {
 
-  // let mut replaced_defines_func: String;
-  // replaced_defines_func = func_definition_parser(&VAR_DOT).unwrap().1;
+  let mut replaced_defines_func: String;
+  replaced_defines_func = func_definition_parser(&IF_SINGLE).unwrap().1;
 
   // // println!("{:?}", replaced_defines_func);
 
-  // let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
+  let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
   
-  // let mut buf: String = String::new();
-  // show_translation_unit(&mut buf, &trans);
-  // buf = let2var_parser(&buf).unwrap().1;
-  // buf = uniform_vars_parser(&buf).unwrap().1;
-  // buf = definition_parser(&buf).unwrap().1;
-  // buf = replace_main_line(&buf).unwrap().1;
-  // buf = replace_inouts(&buf).unwrap().1;
-  // buf = search_and_replace_void(&buf).unwrap().1;
-  // buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
+  let mut buf: String = String::new();
+  show_translation_unit(&mut buf, &trans);
 
-  let buf = let2var_parser(&VAR_DOT).unwrap().1;
-  // let buf = search_for_full_identifier(&"aj")(&VAR_DOT).unwrap().1;
+  // buf = let2var_parser(&buf).unwrap().1;
+  buf = uniform_vars_parser(&buf).unwrap().1;
+  buf = definition_parser(&buf).unwrap().1;
+  buf = replace_main_line(&buf).unwrap().1;
+  buf = replace_inouts(&buf).unwrap().1;
+  buf = search_and_replace_void(&buf).unwrap().1;
+  buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
+  
+
+  // let buf = let2var_parser(&VAR_DOT).unwrap().1;
+  // let buf = search_for_full_identifier(&"t")(&VAR_DOT).unwrap().1;
 
   // let buf = replace_all_texture_and_texel_fetch(&DEFINES_FUNC_BUG).unwrap().1;
+
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  // println!("{:?}", trans);
+  println!("{:?}", trans);
   println!("{:?}", buf);
 
 

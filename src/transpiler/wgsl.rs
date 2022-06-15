@@ -1799,28 +1799,32 @@ pub fn show_compound_statement<F>(f: &mut F, cst: &syntax::CompoundStatement, i:
 where
     F: Write,
 {
-    let _ = f.write_str("\n");
+    // let _ = f.write_str("\n");
 
     for st in &cst.statement_list {
         // let _ = f.write_str("    ");
-        show_statement(f, st, i + 1);
+        show_statement(f, st, i + 1, false);
     }
     // indent(f, i);
     // let _ = f.write_str("\n");
 }
 
-pub fn show_statement<F>(f: &mut F, st: &syntax::Statement, i: Indent)
+pub fn show_statement<F>(f: &mut F, st: &syntax::Statement, i: Indent, is_single_line: bool)
 where
     F: Write,
 {
     match *st {
         syntax::Statement::Compound(ref cst) => show_compound_statement(f, cst, i),
-        syntax::Statement::Simple(ref sst) => show_simple_statement(f, sst, i),
+        syntax::Statement::Simple(ref sst) => show_simple_statement(f, sst, i, is_single_line),
     }
 }
 
-pub fn show_simple_statement<F>(f: &mut F, sst: &syntax::SimpleStatement, ind: Indent)
-where
+pub fn show_simple_statement<F>(
+    f: &mut F,
+    sst: &syntax::SimpleStatement,
+    ind: Indent,
+    is_single_line: bool,
+) where
     F: Write,
 {
     match *sst {
@@ -1828,7 +1832,9 @@ where
             show_declaration(f, d, ind);
             let _ = f.write_str("\n");
         }
-        syntax::SimpleStatement::Expression(ref e) => show_expression_statement(f, e, ind),
+        syntax::SimpleStatement::Expression(ref e) => {
+            show_expression_statement(f, e, ind, is_single_line)
+        }
         syntax::SimpleStatement::Selection(ref s) => show_selection_statement(f, s, ind),
         syntax::SimpleStatement::Switch(ref s) => show_switch_statement(f, s, ind),
         syntax::SimpleStatement::CaseLabel(ref cl) => show_case_label(f, cl, ind),
@@ -1837,50 +1843,83 @@ where
     }
 }
 
-pub fn show_expression_statement<F>(f: &mut F, est: &syntax::ExprStatement, i: Indent)
-where
+pub fn show_expression_statement<F>(
+    f: &mut F,
+    est: &syntax::ExprStatement,
+    i: Indent,
+    is_single_line: bool,
+) where
     F: Write,
 {
     if let Some(ref e) = *est {
-        indent(f, i);
+        if !is_single_line {
+            indent(f, i);
+        } else {
+            let _ = f.write_str(" ");
+        }
         show_expr(f, e);
     }
 
-    let _ = f.write_str(";\n");
+    let _ = f.write_str(";");
+    if !is_single_line {
+        let _ = f.write_str("\n");
+    }
 }
 
 pub fn show_selection_statement<F>(f: &mut F, sst: &syntax::SelectionStatement, i: Indent)
 where
     F: Write,
 {
+    let mut is_single_line = false;
+    if let syntax::SelectionRestStatement::Statement(ref if_st) = sst.rest {
+        // let _ = f.write_str("\n");
+        if let syntax::Statement::Simple(_) = **if_st {
+            is_single_line = true;
+        }
+    }
+
     let _ = f.write_str("\n");
     indent(f, i);
     let _ = f.write_str("if (");
     show_expr(f, &sst.cond);
     let _ = f.write_str(") {");
 
-    show_selection_rest_statement(f, &sst.rest, i);
-    let _ = f.write_str("\n");
+    if !is_single_line {
+        let _ = f.write_str("\n");
+    }
+
+    show_selection_rest_statement(f, &sst.rest, i, is_single_line);
+    // let _ = f.write_str("\n");
     // indent(f, i);
     // let _ = f.write_str("}");
 }
 
-pub fn show_selection_rest_statement<F>(f: &mut F, sst: &syntax::SelectionRestStatement, i: Indent)
-where
+pub fn show_selection_rest_statement<F>(
+    f: &mut F,
+    sst: &syntax::SelectionRestStatement,
+    i: Indent,
+    is_single_line: bool,
+) where
     F: Write,
 {
     match *sst {
         syntax::SelectionRestStatement::Statement(ref if_st) => {
             // let _ = f.write_str("\n");
-            show_statement(f, if_st, i);
-            indent(f, i);
+
+            show_statement(f, if_st, i, is_single_line);
+            if !is_single_line {
+                indent(f, i);
+            } else {
+                let _ = f.write_str(" ");
+            }
+
             let _ = f.write_str("}\n");
         }
         syntax::SelectionRestStatement::Else(ref if_st, ref else_st) => {
-            show_statement(f, if_st, i);
+            show_statement(f, if_st, i, is_single_line);
             indent(f, i);
             let _ = f.write_str("} else { \n");
-            show_statement(f, else_st, i);
+            show_statement(f, else_st, i, is_single_line);
             indent(f, i);
             let _ = f.write_str("}\n");
         }
@@ -1897,7 +1936,7 @@ where
     let _ = f.write_str(") {\n");
 
     for st in &sst.body {
-        show_statement(f, st, i + 1);
+        show_statement(f, st, i + 1, false);
     }
 
     let _ = f.write_str("}\n");
@@ -1932,11 +1971,11 @@ where
             // manually corrected for float conversions.
             show_condition(f, cond, &syntax::TypeSpecifierNonArray::Int);
             let _ = f.write_str(") ");
-            show_statement(f, body, i);
+            show_statement(f, body, i, false);
         }
         syntax::IterationStatement::DoWhile(ref body, ref cond) => {
             let _ = f.write_str("do ");
-            show_statement(f, body, i);
+            show_statement(f, body, i, false);
             let _ = f.write_str(" while (");
             show_expr(f, cond);
             let _ = f.write_str(")\n");
@@ -1953,7 +1992,7 @@ where
 
             show_for_rest_statement(f, rest, &ty);
             let _ = f.write_str(") {");
-            show_statement(f, body, i);
+            show_statement(f, body, i, false);
             indent(f, i);
             let _ = f.write_str("}\n\n");
         }
