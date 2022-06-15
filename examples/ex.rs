@@ -11,7 +11,7 @@ use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
-use glsl2wgsl::parse_func_defines::func_definition_parser;
+use glsl2wgsl::parse_func_defines::{func_definition_parser, function_call_args_anychar};
 use glsl2wgsl::replace_inouts::{search_and_replace_void, replace_inouts};
 use glsl2wgsl::replace_texel_fetch::*;
 
@@ -396,14 +396,7 @@ void main() {
  }
 ";
 
-const ONE_DEFINE: &str = "
-#define texel(ax, p) texelFetch(ax, Bi(p), ax)
-#define q 12
-#define qw t(q)
-float q;
-float q = 3;
 
-";
 
 const LET_VS_VARPRIVATE: &str = "
 float q;
@@ -423,37 +416,51 @@ void main() {
 }
 ";
 
+const ONE_DEFINE: &str = "
+#define texel(ax, p) texelFetch(ax, Bi(p), ax)
+void main() {
+   float a = texel(ch0, q);
+ }
+";
+
+const DEF_RANGE: &str = "
+#define range(i,a,b) for(int i = a; i <= b; i++)
+
+float Reintegration()
+{ range(i, -2, 2) range(j, -2, 2)
+    { a=2; b=3;}
+}";
+
+
+// TODO: fix the newline for statements
+// THEN: big clean
 
 fn main() {
 
   let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&IF_SINGLE).unwrap().1;
+  replaced_defines_func = func_definition_parser(&DEF_RANGE).unwrap().1;
 
-  // // println!("{:?}", replaced_defines_func);
+
+
+  // println!("replaced_defines_func: {:?}", replaced_defines_func);
 
   let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func)).unwrap();
   
   let mut buf: String = String::new();
   show_translation_unit(&mut buf, &trans);
 
-  // buf = let2var_parser(&buf).unwrap().1;
+  buf = let2var_parser(&buf).unwrap().1;
   buf = uniform_vars_parser(&buf).unwrap().1;
   buf = definition_parser(&buf).unwrap().1;
   buf = replace_main_line(&buf).unwrap().1;
   buf = replace_inouts(&buf).unwrap().1;
   buf = search_and_replace_void(&buf).unwrap().1;
   buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
-  
-
-  // let buf = let2var_parser(&VAR_DOT).unwrap().1;
-  // let buf = search_for_full_identifier(&"t")(&VAR_DOT).unwrap().1;
-
-  // let buf = replace_all_texture_and_texel_fetch(&DEFINES_FUNC_BUG).unwrap().1;
 
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  println!("{:?}", trans);
-  println!("{:?}", buf);
+  // println!("{:?}", trans);
+  // println!("{:?}", buf);
 
 
   // assert_eq!(&do_parse(SIMPLE_VEC2), "let e: vec2<f32> = vec2<f32>(3.);\nlet b: f32 = 1.;\n");

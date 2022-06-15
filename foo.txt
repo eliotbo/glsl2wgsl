@@ -1,4 +1,10 @@
-norm(po: vec3<f32>)  {
-	if (r.x > d.x) { r = d; }
+Reintegration() -> f32 {
+	for (var i: i32 = -2; i <= 2; i = i + 1) {
+	for (var j: i32 = -2; j <= 2; j = j + 1) {		a = 2;
+		b = 3;
+	}
+
+	}
+
 } 
 

@@ -43,6 +43,7 @@ pub fn greet(v: &str) {}
 #[wasm_bindgen]
 pub fn do_parse(x: String) -> String {
     let replaced_defines_func: String;
+
     if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&x) {
         let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func));
         println!("{:?}", trans);

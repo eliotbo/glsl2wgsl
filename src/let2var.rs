@@ -317,7 +317,7 @@ pub fn search_for_full_identifier<'a, 'b>(
         ))(i)?;
 
         if let (rest, Some((_, name))) = x {
-            println!("{}", name);
+            // println!("{}", name);
             let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
             let rest_of_line = rest_of_line.iter().collect::<String>();
 

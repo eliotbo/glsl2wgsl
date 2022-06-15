@@ -2067,7 +2067,7 @@ pub fn show_for_rest_statement<F>(
 
     if let Some(ref e) = r.post_expr {
         let e2 = convert_to_float(*e.clone(), ty);
-        println!("{:?}", e2);
+
         show_expr(f, &e2);
     }
 }

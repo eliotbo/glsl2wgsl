@@ -30,8 +30,6 @@ pub use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
-const ALPHANUM_UNDER: &str = "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
-
 fn identifier_hashtag(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_' || ch == '#'
 }
@@ -129,41 +127,88 @@ pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
     )(i)
 }
 
+// pub fn argument1(i: &str) -> ParserResult<String> {
+//     let mut parsed_text: String = "".to_string();
+//     let mut scope = 1;
+//     let mut rest = i;
+//     loop {
+//         let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
+//             till_next_paren_or_comma(rest)?;
+//         rest = rest1;
+//         parsed_text += &(text_so_far + &paren_or_comma);
+
+//         match paren_or_comma.as_str() {
+//             "(" => scope += 1,
+
+//             ")" => scope -= 1,
+
+//             _ => {} // case of a comma
+//         }
+
+//         if scope == 0 {
+//             break;
+//         }
+//     }
+
+//     return Ok((rest, parsed_text));
+// }
+
+// pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
+//     map(
+//         delimited(
+//             tag("("),
+//             separated_list0(
+//                 delimited(multispace0, char(','), multispace0),
+//                 alt((argument1, map(multispace0, |x: &str| x.to_string()))),
+//             ),
+//             tag(")"),
+//         ),
+//         // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
+//         |x: Vec<String>| x,
+//     )(i)
+// }
+
+// parse one argument of a function call
 pub fn argument1(i: &str) -> ParserResult<String> {
     let mut parsed_text: String = "".to_string();
-    let mut scope = 1;
+    let mut scope = 0;
     let mut rest = i;
     loop {
         let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
             till_next_paren_or_comma(rest)?;
         rest = rest1;
-        parsed_text += &(text_so_far + &paren_or_comma);
+        parsed_text += &text_so_far;
 
         match paren_or_comma.as_str() {
             "(" => scope += 1,
+            ")" => {
+                scope -= 1;
 
-            ")" => scope -= 1,
-
-            _ => {} // case of a comma
+                // end of function call
+                if scope == -1 {
+                    break;
+                }
+            }
+            _ => {
+                // case of a comma
+                // end of argument
+                if scope == 0 {
+                    break;
+                }
+            }
         }
 
-        if scope == 0 {
-            break;
-        }
+        parsed_text += &paren_or_comma;
     }
 
-    return Ok((rest, parsed_text));
+    Ok((rest, parsed_text))
 }
 
 pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
     map(
-        delimited(
+        preceded(
             tag("("),
-            separated_list0(
-                delimited(multispace0, char(','), multispace0),
-                alt((argument1, map(multispace0, |x: &str| x.to_string()))),
-            ),
-            tag(")"),
+            many0(delimited(multispace0, argument1, multispace0)),
         ),
         // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
         |x: Vec<String>| x,
@@ -199,6 +244,7 @@ pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<Strin
         ),
         |x| {
             //
+
             let mut ret = "".to_string();
             for (v_chars, name) in x.0.iter() {
                 ret.push_str(&v_chars.iter().collect::<String>());
@@ -241,6 +287,8 @@ pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserR
                 }
                 // ret.push_str(&num);
             }
+            // println!("here: {}", ret);
+
             ret
         },
     )(i)
@@ -331,13 +379,15 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
         // many0(many_till(anychar, (tag(&*def.name))).and(function_call_args)).and(rest_of_script),
         |(lines, rest)| {
             //
-            // println!(  "success : {:?}", rest );
+            // println!("success : {:?}", def.name);
+            // println!("OKAY OKAY OKAY: {:?}", lines);
 
             let mut all_script = "".to_string();
             for ((so_far_chars, _), args) in lines.iter() {
                 // println!("arggs : {:?}", args);
                 let mut so_far = so_far_chars.iter().collect::<String>();
                 let mut replaced_expression = def.replace_by.to_string();
+                // println!("OKAY OKAY OKAY: {}", replaced_expression);
 
                 for (n, arg) in args.iter().enumerate() {
                     let num_str = "#arg_".to_string() + &n.to_string();
@@ -385,7 +435,7 @@ pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserRe
 
 pub fn func_definition_parser(i: &str) -> ParserResult<String> {
     let (rest, define_funcs) = get_all_define_funcs(i)?;
-    println!("def : {:?}", define_funcs);
+    // println!("def : {:?}", define_funcs);
     let (_, no_defines) = erase_all_func_defines(i)?;
     // println!("define_funcs: {:?}", define_funcs);
     // println!("no_defines: {:?}", no_defines);
