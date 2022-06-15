@@ -1,31 +1,18 @@
-// This parser finds all instances of uniform variables (say iResolution) and inserts the
-// "uni." root variable name (e.g. uni.iResolution)
-
-// use nom::branch::alt;
-// use nom::bytes::complete::tag;
-// use nom::character::complete::anychar;
-
-// use nom::combinator::{eof, map};
-// use nom::error::VerboseError;
-// use nom::multi::{many0, many_till};
+// This parser parses the "#define func(arg0, arg1) other_func(arg0, arg1)" statements,
+// and replaces all instances of func() with other_func().
 
 use nom::branch::alt;
-use nom::bytes::complete::{is_not, tag, take_until, take_while1};
-use nom::character::complete::{
-    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
-    space0, space1,
-};
-use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{count, fold_many0, many0, many0_count, many1, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
-use nom::Err::*;
-use nom::Parser;
+use nom::bytes::complete::{tag, take_while1};
+use nom::character::complete::{alpha1, alphanumeric1, anychar, char, multispace0, space1};
+
+use nom::combinator::{eof, map, peek, recognize, success, verify};
+use nom::error::VerboseError;
+use nom::multi::{many0, many_till, separated_list0};
+use nom::sequence::{delimited, pair, preceded};
 
 use nom::IResult;
+use nom::Parser;
 
-// pub use crate::nom_helpers::{many0__span, IResult2, Span};
 pub use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
@@ -55,13 +42,13 @@ pub fn anychar_func(i: &str) -> ParserResult<String> {
 }
 
 pub fn blank_space(i: &str) -> ParserResult<String> {
-    map(recognize(many0(alt((multispace0, tag("\\\n"))))), |x| {
+    map(recognize(many0(alt((multispace0, tag("\\\n"))))), |_x| {
         "".to_string()
     })(i)
 }
 
 pub fn blank_space2(i: &str) -> ParserResult<String> {
-    map(many0(alt((multispace0, tag("\t")))), |x| "".to_string())(i)
+    map(many0(alt((multispace0, tag("\t")))), |_x| "".to_string())(i)
 }
 
 pub fn erase_one_define(i: &str) -> ParserResult<String> {
@@ -80,15 +67,6 @@ pub fn erase_one_define(i: &str) -> ParserResult<String> {
         |x| x.0.iter().collect(),
     )(i)
 }
-
-// pub fn identifier(input: &str) -> IResult<&str, &str> {
-//   recognize(
-//     pair(
-//       alt((alpha1, tag("_"))),
-//       many0_count(alt((alphanumeric1, tag("_"))))
-//     )
-//   )(input)
-// }
 
 pub fn identifier(input: &str) -> ParserResult<&str> {
     map(
@@ -126,47 +104,6 @@ pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
         },
     )(i)
 }
-
-// pub fn argument1(i: &str) -> ParserResult<String> {
-//     let mut parsed_text: String = "".to_string();
-//     let mut scope = 1;
-//     let mut rest = i;
-//     loop {
-//         let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
-//             till_next_paren_or_comma(rest)?;
-//         rest = rest1;
-//         parsed_text += &(text_so_far + &paren_or_comma);
-
-//         match paren_or_comma.as_str() {
-//             "(" => scope += 1,
-
-//             ")" => scope -= 1,
-
-//             _ => {} // case of a comma
-//         }
-
-//         if scope == 0 {
-//             break;
-//         }
-//     }
-
-//     return Ok((rest, parsed_text));
-// }
-
-// pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
-//     map(
-//         delimited(
-//             tag("("),
-//             separated_list0(
-//                 delimited(multispace0, char(','), multispace0),
-//                 alt((argument1, map(multispace0, |x: &str| x.to_string()))),
-//             ),
-//             tag(")"),
-//         ),
-//         // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
-//         |x: Vec<String>| x,
-//     )(i)
-// }
 
 // parse one argument of a function call
 pub fn argument1(i: &str) -> ParserResult<String> {
@@ -210,7 +147,6 @@ pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
             tag("("),
             many0(delimited(multispace0, argument1, multispace0)),
         ),
-        // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
         |x: Vec<String>| x,
     )(i)
 }
@@ -261,13 +197,7 @@ pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<Strin
 pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
     map(
         many_till(
-            many_till(
-                anychar,
-                // alt((tag(&*v), eof)),
-                // verify(identifier, |(x, id)| x.to_string() == v),
-                // alt(identifier_check(v.to_string())),
-                alt((verify(identifier, |x| x == v), eof)),
-            ),
+            many_till(anychar, alt((verify(identifier, |x| x == v), eof))),
             eof,
         ),
         |x| {
@@ -285,9 +215,7 @@ pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserR
                 } else {
                     ret.push_str(&name);
                 }
-                // ret.push_str(&num);
             }
-            // println!("here: {}", ret);
 
             ret
         },
@@ -308,9 +236,8 @@ pub struct DefineFunc {
     pub replace_by: String,
 }
 
-// pub fn get_name_and_args(i: &str) -> ParserResult<(String, Vec<String>)> {
 pub fn get_name_and_args(i: &str) -> ParserResult<(String, Vec<String>)> {
-    map(many_till(anychar, replace_tag), |(v, (name, args))| {
+    map(many_till(anychar, replace_tag), |(_v, (name, args))| {
         (name, args)
     })(i)
 }
@@ -348,22 +275,11 @@ pub fn construct_assignment_vars(i: &str) -> ParserResult<DefineFunc> {
 }
 
 pub fn get_all_define_funcs(i: &str) -> ParserResult<Vec<DefineFunc>> {
-    map(many0(construct_assignment_vars), |x2| {
-        // let mut assignments = x2.join("\n");
-        // assignments.push('\n');
-        // assignments
-        x2
-    })(i)
+    map(many0(construct_assignment_vars), |x2| x2)(i)
 }
 
 pub fn detect_identifier_as_arg(i: &str, name: String) -> ParserResult<String> {
-    map(
-        verify(anychar_underscore, |x: &str| x.to_string() == name),
-        |x| {
-            //
-            x
-        },
-    )(i)
+    verify(anychar_underscore, |x: &str| x.to_string() == name)(i)
 }
 
 pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserResult<String> {
@@ -376,26 +292,17 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
             .and(function_call_args_anychar),
         )
         .and(rest_of_script),
-        // many0(many_till(anychar, (tag(&*def.name))).and(function_call_args)).and(rest_of_script),
         |(lines, rest)| {
-            //
-            // println!("success : {:?}", def.name);
-            // println!("OKAY OKAY OKAY: {:?}", lines);
-
             let mut all_script = "".to_string();
             for ((so_far_chars, _), args) in lines.iter() {
-                // println!("arggs : {:?}", args);
                 let mut so_far = so_far_chars.iter().collect::<String>();
                 let mut replaced_expression = def.replace_by.to_string();
-                // println!("OKAY OKAY OKAY: {}", replaced_expression);
 
                 for (n, arg) in args.iter().enumerate() {
                     let num_str = "#arg_".to_string() + &n.to_string();
                     if let Ok((_, assignment)) =
                         search_and_replace(&replaced_expression, num_str.clone(), arg.to_string())
                     {
-                        // println!("OKAY OKAY OKAY: {}, {}", arg, &num_str);
-                        // println!("replaced_expression: {}, ", replaced_expression);
                         replaced_expression = assignment;
                     }
                 }
@@ -416,44 +323,18 @@ pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserRe
             full_script = fs;
         }
     }
-    // println!("full_script : {:?}", full_script);
-    // println!("defs : {:?}", defs);
-    success(full_script)("")
 
-    // map(many0(construct_assignment_vars), |x2| {
-    //     //
-    //     "".to_string()
-    // })(i)
+    success(full_script)("")
 }
 
-// preceded( delimited(tag("#define "),  anychar_underscore,
-//     delimited(tag("("), many0(anychar), tag(")"))
-// ) )),
-
-// TODO:
-// replace definition instances using the argument order
-
 pub fn func_definition_parser(i: &str) -> ParserResult<String> {
-    let (rest, define_funcs) = get_all_define_funcs(i)?;
-    // println!("def : {:?}", define_funcs);
-    let (_, no_defines) = erase_all_func_defines(i)?;
-    // println!("define_funcs: {:?}", define_funcs);
-    // println!("no_defines: {:?}", no_defines);
+    let (_rest, define_funcs) = get_all_define_funcs(i)?;
 
-    if let Ok((rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
+    let (_, no_defines) = erase_all_func_defines(i)?;
+
+    if let Ok((_rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
         return success(so_far)("");
     }
 
     success("".to_string())("")
 }
-
-// pub fn func_definition_parser(i: &str) -> ParserResult<String> {
-//     map(
-//         get_all_define_funcs.and(many_till(anychar, eof)),
-//         |(mut replaced_definitions, (rest, _))| {
-//             let rest_of_script: String = rest.iter().collect();
-//             replaced_definitions.push_str(&rest_of_script);
-//             replaced_definitions
-//         },
-//     )(i)
-// }

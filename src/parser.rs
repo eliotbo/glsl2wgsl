@@ -10,31 +10,9 @@
 //! [`Parse`]: crate::parser::Parse
 //! [`ParseError`]: crate::parser::ParseError
 
-use core::fmt;
-use nom::error::convert_error;
-use nom::Err as NomErr;
-
-// use crate::parsers::ParserResult;
 use crate::nom_helpers::{IResult2, ParseError, Span};
-// use crate::parsers_span::ParserResult;
 use crate::syntax;
-
-// /// A parse error. It contains a [`String`] giving information on the reason why the parser failed.
-// #[derive(Clone, Debug, Eq, PartialEq)]
-// pub struct ParseError {
-//     pub info: String,
-// }
-
-// trait Error {}
-
-// impl Error for ParseError {}
-// // impl std::error::Error for ParseError {}
-
-// impl fmt::Display for ParseError {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-//         write!(f, "error: {}", self.info)
-//     }
-// }
+use nom::Err as NomErr;
 
 /// Run a parser `P` on a given `[&str`] input.
 pub(crate) fn run_parser<P, T>(source: Span, parser: P) -> Result<T, ParseError>

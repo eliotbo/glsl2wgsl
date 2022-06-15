@@ -12,15 +12,14 @@ use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until, take_while1};
 use nom::character::complete::{anychar, char, digit1, space0, space1};
 use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{all_consuming, cut, eof, map, not, opt, peek, recognize, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
+use nom::combinator::{all_consuming, cut, map, not, opt, peek, recognize, value, verify};
+use nom::error::{VerboseError, VerboseErrorKind};
 use nom::multi::{fold_many0, many0, many1, separated_list0};
 use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 use nom::{Err as NomErr, ParseTo};
 
 use crate::nom_helpers::{
-    blank_space, blank_space_span, cnst, cnst_span, eol, eol_span, many0_, many0__span,
-    str_till_eol, str_till_eol_span, ParseError,
+    blank_space_span, cnst_span, eol_span, many0__span, str_till_eol_span, ParseError,
 };
 pub use crate::nom_helpers::{IResult2, Span};
 use crate::syntax;
@@ -33,16 +32,16 @@ fn keyword<'a>(kwd: &'a str) -> impl FnMut(Span<'a>) -> IResult2<Span> {
     )
 }
 
-// /// Parse a single comment.
-// pub fn comment(i: Span) -> IResult2<&str> {
-//     preceded(
-//         char('/'),
-//         alt((
-//             preceded(char('/'), cut(str_till_eol)),
-//             preceded(char('*'), cut(terminated(take_until("*/"), tag("*/")))),
-//         )),
-//     )(i)
-// }
+/// Parse a single comment.
+pub fn comment(i: Span) -> IResult2<Span> {
+    preceded(
+        char('/'),
+        alt((
+            preceded(char('/'), cut(str_till_eol_span)),
+            preceded(char('*'), cut(terminated(take_until("*/"), tag("*/")))),
+        )),
+    )(i)
+}
 
 /// Parse a single comment.
 pub fn comment_span(i: Span) -> IResult2<Span> {
@@ -277,7 +276,7 @@ pub fn type_specifier_non_struct(i: Span) -> IResult2<syntax::TypeSpecifierNonAr
         "uimageCubeArray" => Ok((i1, syntax::TypeSpecifierNonArray::UImageCubeArray)),
         _ => {
             let vek = VerboseErrorKind::Context("unknown type specifier non array");
-            let ve = VerboseError {
+            let _ve = VerboseError {
                 errors: vec![(i1, vek)],
             };
             let ve2 = Err(nom::Err::Error(ParseError::new(
@@ -317,15 +316,6 @@ pub fn type_specifier(i: Span) -> IResult2<syntax::TypeSpecifier> {
 pub fn void(i: Span) -> IResult2<()> {
     value((), keyword("void"))(i)
 }
-
-// /// Parse a digit that precludes a leading 0.
-// pub(crate) fn nonzero_digits(i: Span) -> IResult2<Span> {
-//     verify(digit1, |s: Span| {
-//         let sf = s.fragment();
-//         let w = sf.as_bytes()[0] != b'0';
-//         w
-//     })(i)
-// }
 
 /// Parse a digit that precludes a leading 0.
 pub(crate) fn nonzero_digits_span(i: Span) -> IResult2<Span> {
@@ -418,10 +408,6 @@ pub fn integral_lit(i: Span) -> IResult2<i32> {
                 "vector_selector must start from a metric name".to_owned(),
                 i,
             ))),
-            // Err(NomErr::Failure(VerboseError::from_error_kind(
-            //     i,
-            //     ErrorKind::AlphaNumeric,
-            // ))),
         },
 
         Err(NomErr::Failure(x)) | Err(NomErr::Error(x)) => Err(NomErr::Error(x)),

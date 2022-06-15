@@ -1,30 +1,18 @@
-// This parser finds all instances of uniform variables (say iResolution) and inserts the
-// "uni." root variable name (e.g. uni.iResolution)
-
-// use nom::branch::alt;
-// use nom::bytes::complete::tag;
-// use nom::character::complete::anychar;
-
-// use nom::combinator::{eof, map};
-// use nom::error::VerboseError;
-// use nom::multi::{many0, many_till};
+// This parser finds and replaces all instances of the GLSL texelFetch and texture functions
+// by the WGLSL textureLoad function.
 
 use nom::branch::alt;
-use nom::bytes::complete::{is_not, tag, take_until, take_while1};
-use nom::character::complete::{
-    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
-    space0, space1,
-};
-use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{count, fold_many0, many0, many0_count, many1, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+use nom::bytes::complete::{tag, take_while1};
+use nom::character::complete::{alpha1, alphanumeric1, anychar, char, multispace0};
+
+use nom::combinator::{eof, map, peek, recognize, verify};
+use nom::error::VerboseError;
+use nom::multi::{many0, many_till, separated_list0};
+use nom::sequence::{delimited, pair, preceded};
 use nom::Parser;
 
 use nom::IResult;
 
-// pub use crate::nom_helpers::{many0__span, IResult2, Span};
 pub use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
@@ -71,16 +59,6 @@ pub fn identifier(input: &str) -> ParserResult<&str> {
 pub fn rest_of_script(i: &str) -> ParserResult<String> {
     map(many_till(anychar, eof), |x| x.0.iter().collect())(i)
 }
-
-// // TODO: make argument detection more robust with parenthesis
-// // tracking ((())), since argument can have parentheses and
-// // commas in them
-// pub fn argument1(i: &str) -> ParserResult<String> {
-//     map(many_till(anychar, peek(one_of(",)"))), |x| {
-//         x.0.iter().collect::<String>()
-//         // &s
-//     })(i)
-// }
 
 // all characters until either a comma or a parenthesis
 pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
@@ -136,7 +114,6 @@ pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
             tag("("),
             many0(delimited(multispace0, argument1, multispace0)),
         ),
-        // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
         |x: Vec<String>| x,
     )(i)
 }
@@ -154,23 +131,6 @@ pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
         |x| x,
     )(i)
 }
-
-// pub fn search_and_replace_void(i: &str) -> ParserResult<String> {
-//     map(
-//         many_till(many_till(anychar, alt((tag("-> ()"), eof))), eof),
-//         |x| {
-//             //
-//             let mut ret = "".to_string();
-//             for (v_chars, _) in x.0.iter() {
-//                 ret.push_str(&v_chars.iter().collect::<String>());
-//                 // if name == &v {
-//                 //     ret.push_str(&num);
-//                 // }
-//             }
-//             ret
-//         },
-//     )(i)
-// }
 
 // search (v, where v is an identifier) and replace by (num, which can be anychar)
 pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
@@ -259,21 +219,21 @@ pub fn check_one_texture(i: &str) -> ParserResult<String> {
 pub fn replace_all_texture_and_texel_fetch(i: &str) -> ParserResult<String> {
     let (_, replaced_texel_fetch) = map(
         many0(check_one_texel_fetch).and(many_till(anychar, eof)),
-        |(s, (t, q))| {
-            let ret = s.join("");
+        |(s, (t, _q))| {
+            let so_far = s.join("");
             let rest = t.iter().collect::<String>();
 
-            ret + &rest
+            so_far + &rest
         },
     )(i)?;
 
     let replaced_texel_fetch_and_texture = map(
         many0(check_one_texture).and(many_till(anychar, eof)),
-        |(s, (t, q))| {
-            let ret = s.join("");
+        |(s, (t, _q))| {
+            let so_far = s.join("");
             let rest = t.iter().collect::<String>();
 
-            ret + &rest
+            so_far + &rest
         },
     )(replaced_texel_fetch.as_str());
 

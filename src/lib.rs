@@ -38,12 +38,10 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn greet(v: &str) {}
+pub fn greet(_v: &str) {}
 
 #[wasm_bindgen]
 pub fn do_parse(x: String) -> String {
-    let replaced_defines_func: String;
-
     if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&x) {
         let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func));
         println!("{:?}", trans);
@@ -51,19 +49,14 @@ pub fn do_parse(x: String) -> String {
             Err(err) => {
                 let span = err.span();
                 let fragment = *span.fragment();
-                // let offset = span.location_offset();
-                // let problematic_code_to_end = &fragment[offset..];
 
                 /////////////// begin formatting error message //////////////////////////////////////
-                let mut buggy_line = if let Some(line) = fragment.lines().next() {
+                let buggy_line = if let Some(line) = fragment.lines().next() {
                     line
                 } else {
                     "Error within error: there is no line to be checked."
                 }
                 .to_string();
-                // let err_long_str =
-                // format!("There seems to be a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line: {}",
-                //     span.location_line(), span.get_column(), buggy_line);
 
                 let mut count = 0;
                 let mut s = "".to_string();
@@ -95,19 +88,8 @@ pub fn do_parse(x: String) -> String {
                 let upda = replace_main_line(&defi).unwrap().1;
                 let inout = replace_inouts(&upda).unwrap().1;
                 //
-                buf = search_and_replace_void(&buf).unwrap().1;
+                buf = search_and_replace_void(&inout).unwrap().1;
                 buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
-
-                // show_translation_unit(&mut buf, &trans);
-                // buf = let2var_parser(&buf).unwrap().1;
-                // buf = uniform_vars_parser(&buf).unwrap().1;
-                // buf = definition_parser(&buf).unwrap().1;
-                // buf = replace_main_line(&buf).unwrap().1;
-
-                // let private_vars = add_private_to_global_vars(&defi);
-
-                println!("{:?}", inout);
-                buf = inout;
 
                 return buf;
             }
@@ -116,31 +98,3 @@ pub fn do_parse(x: String) -> String {
         "Could not convert a function(s) with the \"#define\" keyword".to_string()
     }
 }
-
-// Ok(
-//     TranslationUnit(
-//         NonEmpty([
-//             Declaration(
-//                 InitDeclaratorList(
-//                     InitDeclaratorList {
-//                         head: SingleDeclaration {
-//                             ty: FullySpecifiedType { qualifier: None, ty: TypeSpecifier { ty: Float, array_specifier: None } },
-//                             name: Some(Identifier("yu")), array_specifier: None, initializer: Some(Simple(IntConst(1)))
-//                         },
-//                         tail: [] }))])))
-
-// Ok(
-//     TranslationUnit(
-//         NonEmpty([
-//             Declaration(
-//                 InitDeclaratorList(
-//                     InitDeclaratorList {
-//                         head: SingleDeclaration {
-//                             ty: FullySpecifiedType { qualifier: None, ty: TypeSpecifier { ty: Float, array_specifier: None } },
-//                             name: Some(Identifier("yu")), array_specifier: None, initializer: Some(Simple(IntConst(1))) }, tail: [] })),
-//             Declaration(InitDeclaratorList(
-//                 InitDeclaratorList {
-//                     head: SingleDeclaration {
-//                         ty: FullySpecifiedType {
-//                             qualifier: None, ty: TypeSpecifier { ty: Float, array_specifier: None } }, name: Some(Identifier("sa")),
-//                             array_specifier: None, initializer: Some(Simple(IntConst(1))) }, tail: [] }))])))

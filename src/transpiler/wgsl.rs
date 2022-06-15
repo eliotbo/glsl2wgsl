@@ -1,23 +1,4 @@
-//! A GLSL450/GLSL460 transpiler that takes a syntax tree and writes it as a plain raw GLSL
-//! [`String`].
-//!
-//! # Foreword
-//!
-//! This module exports several functions that just transform a part of a syntax tree into its raw
-//! GLSL [`String`] representation.
-//!
-//! > Important note: this module – and actually, any [`transpiler`] module – is not responsible in
-//! > optimizing the syntax tree nor semantically check its validity. This is done in other stages
-//! > of the compilation process.
-//!
-//! In order to achieve that purpose, you could:
-//!
-//! - For each elements in the AST, return a [`String`] or [`Cow<str>`].
-//! - Insert the string representation via a formatter.
-//!
-//! The second solution is better because it lets the user handle the memory the way they want:
-//! they might just use a dynamic buffer that implements [`Write`] or simply pass a `&mut`
-//! [`String`]. It’s up to you.
+//! WGSL transpiler that takes a syntax tree and writes it as a plain raw WGSL [`String`].
 //!
 //! # How to use this module
 //!
@@ -26,18 +7,10 @@
 //! [`Write`] object. You’re likely to be interested in [`show_translation_unit`] to start with.
 //!
 //! [`Cow<str>`]: std::borrow::Cow
-//! [`Write`]: std::fmt::Write
 //! [`show_translation_unit`]: crate::transpiler::glsl::show_translation_unit
 //! [`syntax`]: crate::syntax
 //! [`transpiler`]: crate::transpiler
 
-// use std::fmt::Write;
-// use crate::writer::Write;
-// use crate::writer::write_to::WriteTo;
-// #![crate_type = "dylib"]
-
-// #![no_std]
-// use crate::nom_helpers::Span;
 use crate::syntax;
 use core::fmt::Write;
 use itertools::Itertools;
@@ -518,33 +491,6 @@ pub fn is_float_str(ty: &str) -> bool {
         _ => false,
     }
 }
-
-// isFloat :: TypeSpecifierNonArray -> Bool
-// isFloat Vec2 = True
-// isFloat Vec3 = True
-// isFloat Vec4 = True
-// isFloat BVec2 = True
-// isFloat BVec3 = True
-// isFloat BVec4 = True
-// isFloat IVec2 = True
-// isFloat IVec3 = True
-// isFloat IVec4 = True
-// isFloat UVec2 = True
-// isFloat UVec3 = True
-// isFloat UVec4 = True
-// isFloat Mat2 = True
-// isFloat Mat3 = True
-// isFloat Mat4 = True
-// isFloat Mat2x2 = True
-// isFloat Mat2x3 = True
-// isFloat Mat2x4 = True
-// isFloat Mat3x2 = True
-// isFloat Mat3x3 = True
-// isFloat Mat3x4 = True
-// isFloat Mat4x2 = True
-// isFloat Mat4x3 = True
-// isFloat Mat4x4 = True
-// isFloat _ = False
 
 pub fn show_type_specifier<F>(f: &mut F, t: &syntax::TypeSpecifier)
 where
@@ -1115,7 +1061,6 @@ where
                 let _ = f.write_str("(");
                 do_close_parens = true;
             }
-            // }
 
             if e.precedence() <= op.precedence() {
                 show_expr(f, &e);
@@ -1130,19 +1075,16 @@ where
             }
 
             if swizzled {
-                // let _ = f.write_str(";\n");
-                // indent(f, 1);
-                // show_expr(f, &v);
                 swizzle.chars().for_each(|c| {
                     let _ = f.write_str(";\n");
                     indent(f, 1);
-                    // show_expr(f, &left);
+
                     let _ = f.write_str(&left_variable);
                     let _ = f.write_str(".");
                     let _ = f.write_str(&c.to_string());
                     let _ = f.write_str(" = ");
                     let _ = f.write_str(&left_variable);
-                    // show_expr(f, &left);
+
                     let _ = f.write_str(&swizzle);
                     let _ = f.write_str(".");
                     let _ = f.write_str(&c.to_string());
@@ -1185,7 +1127,6 @@ where
                 syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e),
             }
 
-            // show_function_identifier(f, &fun);
             let _ = f.write_str("(");
 
             if !args.is_empty() {
@@ -1496,7 +1437,6 @@ pub fn show_function_prototype<F>(f: &mut F, fp: &syntax::FunctionPrototype)
 where
     F: Write,
 {
-    // let _ = f.write_str(" ");
     let _ = f.write_str("fn ");
     show_identifier(f, &fp.name);
 
@@ -1514,13 +1454,7 @@ where
     }
     let _ = f.write_str(")");
 
-    // let _ = f.write_str(" -> ");
-
-    // show_type_specifier_non_array(f, &fp.ty.ty.ty);
     show_return_type(f, &fp.ty.ty);
-    // show_type_specifier(f, &fp.ty.ty);
-
-    // show_fully_specified_type(f, &fp.ty);
 }
 pub fn show_function_parameter_declaration<F>(f: &mut F, p: &syntax::FunctionParameterDeclaration)
 where
@@ -1530,7 +1464,6 @@ where
         syntax::FunctionParameterDeclaration::Named(ref qual, ref fpd) => {
             if let Some(ref q) = *qual {
                 show_type_qualifier(f, q);
-                // let _ = f.write_str(" ");
             }
 
             show_function_parameter_declarator(f, fpd);
@@ -1550,7 +1483,6 @@ pub fn show_function_parameter_declarator<F>(f: &mut F, p: &syntax::FunctionPara
 where
     F: Write,
 {
-    // let _ = f.write_str(" ");
     show_arrayed_identifier(f, &p.ident);
     let _ = f.write_str(": ");
     show_type_specifier(f, &p.ty);
@@ -1563,7 +1495,6 @@ where
     show_single_declaration(f, &i.head, ind);
 
     for decl in &i.tail {
-        // let _ = f.write_str(", ");
         let _ = f.write_str(";\n");
         show_single_declaration_no_type(f, decl, &i.head.ty, ind);
     }
@@ -1610,26 +1541,16 @@ where
         show_identifier(f, name);
 
         let _ = f.write_str(": ");
-        // if let Some(ref arr_spec) = d.array_specifier {
-        //   show_array_spec_wgsl(f, arr_spec);
-        // }
 
         if let Some(ref arr_spec) = d.array_specifier {
             show_array_spec_wgsl(f, arr_spec, ty);
         } else {
-            // show_fully_specified_type(f, &d.ty);
             show_type_specifier(f, &d.ty.ty);
         }
-
-    // if let Some(ref arr_spec) = d.array_specifier {
-    //   let _ = f.write_str(">");
-    // }
     } else {
-        // Struct
         if let Some(ref arr_spec) = d.array_specifier {
             show_array_spec_wgsl(f, arr_spec, ty);
         } else {
-            // show_fully_specified_type(f, &d.ty);
             show_type_specifier(f, &d.ty.ty);
         }
     }
@@ -1660,8 +1581,6 @@ where
                 show_initializer(f, &ternary_init, ty);
             }
         }
-        // show_initializer(f, initializer, ty);
-        // let _ = f.write_str("here");
     }
 }
 
@@ -1732,14 +1651,11 @@ pub fn convert_to_float(e: syntax::Expr, ty: &TypeSpecifierNonArray) -> syntax::
 }
 
 pub fn show_initializer<F>(f: &mut F, i: &syntax::Initializer, ty: &TypeSpecifierNonArray)
-// is_float: bool)
 where
     F: Write,
 {
     match *i {
         syntax::Initializer::Simple(ref e) => {
-            // THIS IS NEW
-            // TODO: check if this introduces bugs
             let new_exp = convert_to_float(*e.clone(), ty);
             show_expr(f, &new_exp);
         }
@@ -1786,10 +1702,9 @@ pub fn show_function_definition<F>(f: &mut F, fd: &syntax::FunctionDefinition, i
 where
     F: Write,
 {
-    // let _ = f.write_str("\n");
     show_function_prototype(f, &fd.prototype);
     let _ = f.write_str(" {");
-    // let _ = f.write_str("{");
+
     show_compound_statement(f, &fd.statement, i);
     indent(f, i);
     let _ = f.write_str("} \n");
@@ -1802,11 +1717,8 @@ where
     let _ = f.write_str("\n");
 
     for st in &cst.statement_list {
-        // let _ = f.write_str("    ");
         show_statement(f, st, i + 1, false);
     }
-    // indent(f, i);
-    // let _ = f.write_str("\n");
 }
 
 pub fn show_statement<F>(f: &mut F, st: &syntax::Statement, i: Indent, is_single_line: bool)
@@ -1872,26 +1784,17 @@ where
 {
     let mut is_single_line = false;
     if let syntax::SelectionRestStatement::Statement(ref if_st) = sst.rest {
-        // let _ = f.write_str("\n");
         if let syntax::Statement::Simple(_) = **if_st {
             is_single_line = true;
         }
     }
 
-    // let _ = f.write_str("\n");
     indent(f, i);
     let _ = f.write_str("if (");
     show_expr(f, &sst.cond);
     let _ = f.write_str(") {");
 
-    // if !is_single_line {
-    // let _ = f.write_str("\n");
-    // }
-
     show_selection_rest_statement(f, &sst.rest, i, is_single_line);
-    // let _ = f.write_str("\n");
-    // indent(f, i);
-    // let _ = f.write_str("}");
 }
 
 pub fn show_selection_rest_statement<F>(
@@ -1904,8 +1807,6 @@ pub fn show_selection_rest_statement<F>(
 {
     match *sst {
         syntax::SelectionRestStatement::Statement(ref if_st) => {
-            // let _ = f.write_str("\n");
-
             show_statement(f, if_st, i, is_single_line);
             if !is_single_line {
                 indent(f, i);

@@ -5,31 +5,18 @@
 //! name but different scopes, they will be considered as the same
 //! variable.
 
-// use nom::branch::alt;
-// use nom::bytes::complete::{tag, take_until, take_while1};
-// use nom::character::complete::{anychar, char, digit1, line_ending, multispace1, space0, space1};
-// use nom::character::{is_hex_digit, is_oct_digit};
-// use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-// use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-// use nom::multi::{fold_many0, many0, many1, many_till, separated_list0};
-// use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
 use nom::Parser;
 
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_until, take_while1};
-use nom::character::complete::{
-    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
-    space0, space1,
-};
-use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{count, fold_many0, many0, many0_count, many1, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
-// use nom::{Err as NomErr, ParseTo};
-use core::num::ParseIntError;
+use nom::character::complete::{alpha1, alphanumeric1, anychar, char, line_ending, multispace1};
+
+use nom::combinator::{cut, eof, map, opt, peek, recognize, success, value, verify};
+use nom::error::{ErrorKind, VerboseError, VerboseErrorKind};
+use nom::multi::{fold_many0, many0, many_till};
+use nom::sequence::{pair, preceded, terminated};
+
 use nom::{Err as NomErr, IResult};
-// use crate::syntax;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 
@@ -109,14 +96,6 @@ pub fn str_till_eol(i: &str) -> ParserResult<&str> {
     )(i)
 }
 
-// Parse a keyword. A keyword is just a regular string that must be followed by punctuation.
-fn keyword<'a>(kwd: &'a str) -> impl FnMut(&'a str) -> ParserResult<'a, &'a str> {
-    terminated(
-        tag(kwd),
-        not(verify(peek(anychar), |&c| identifier_pred(c))),
-    )
-}
-
 /// Parse a single comment.
 pub fn comment(i: &str) -> ParserResult<&str> {
     preceded(
@@ -142,13 +121,6 @@ pub fn comments(i: &str) -> ParserResult<&str> {
     recognize(many0_(terminated(comment, blank_space)))(i)
 }
 
-/// In-between token parser (spaces and comments).
-///
-/// This parser also allows to break a line into two by finishing the line with a backslack ('\').
-fn blank(i: &str) -> ParserResult<()> {
-    value((), preceded(blank_space, comments))(i)
-}
-
 #[inline]
 fn identifier_pred(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
@@ -170,7 +142,7 @@ pub fn string(i: &str) -> ParserResult<String> {
 }
 
 pub fn read_type(i: &str) -> ParserResult<String> {
-    map(tag(": ").and(till_space).and(tag(" = ")), |(x1, x2)| {
+    map(tag(": ").and(till_space).and(tag(" = ")), |(x1, _x2)| {
         let mut colon = ": ".to_owned();
         colon.push_str(&x1.1);
         colon.push_str(" = ");
@@ -202,10 +174,7 @@ pub fn read_named_var(i: &str) -> ParserResult<(String, String)> {
 pub fn till_space_or_colon(i: &str) -> ParserResult<String> {
     map(
         many_till(anychar, peek(alt((tag(" "), tag(":"))))),
-        |(parsed, v)| {
-            let mut s = parsed.iter().collect::<String>();
-            s
-        },
+        |(parsed, _v)| parsed.iter().collect::<String>(),
     )(i)
 }
 
@@ -217,8 +186,6 @@ pub fn till_space(i: &str) -> ParserResult<String> {
     })(i)
 }
 
-// fn keyword<'a>(kwd: &'a str) -> impl FnMut(&'a str) -> ParserResult<'a, &'a str> {
-// pub fn is_repeated<'a>(s: &'a str) -> impl FnMut(&'a str) -> ParserResult<bool> {
 pub fn is_repeated<'a, 'b>(s: &'b str) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
     move |i: &str| {
         map(opt(peek(many_till(anychar, peek(tag(s))))), |x| match x {
@@ -231,10 +198,7 @@ pub fn is_repeated<'a, 'b>(s: &'b str) -> impl FnMut(&'a str) -> ParserResult<bo
 pub fn get_named_var(i: &str) -> ParserResult<String> {
     map(
         tag("let ").and(till_space_or_colon).and(either_type_or_not),
-        |(x1, x2)| {
-            // x1.1.to_owned()
-            x1.1
-        },
+        |(x1, _x2)| x1.1,
     )(i)
 }
 
@@ -316,8 +280,7 @@ pub fn search_for_full_identifier<'a, 'b>(
             }),
         ))(i)?;
 
-        if let (rest, Some((_, name))) = x {
-            // println!("{}", name);
+        if let (rest, Some((_, _name))) = x {
             let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
             let rest_of_line = rest_of_line.iter().collect::<String>();
 
@@ -336,10 +299,6 @@ pub fn search_for_full_identifier<'a, 'b>(
 pub fn decl_is_reassigned(i: &str) -> ParserResult<bool> {
     let (rest, name) = map(get_named_var, |x| x)(i)?;
 
-    // let rest0: &str = pair.0;
-    // let mut name: String = pair.1;
-    // name.push_str(" = ");
-    // let z: ParserResult<bool> = map(peek(is_repeated(&name)), |x| x)(rest0);
     let z: ParserResult<bool> = map(peek(search_for_full_identifier(&name)), |x| x)(rest);
     return z;
 }
@@ -347,11 +306,9 @@ pub fn decl_is_reassigned(i: &str) -> ParserResult<bool> {
 pub fn write_var_or_let(i: &str) -> ParserResult<String> {
     map(opt(peek(decl_is_reassigned)), |x| {
         if let Some(true) = x {
-            let mut q = "var ".to_owned();
-            q
+            "var ".to_owned()
         } else {
-            let mut q = "let ".to_owned();
-            q
+            "let ".to_owned()
         }
     })(i)
 }
@@ -359,7 +316,7 @@ pub fn write_var_or_let(i: &str) -> ParserResult<String> {
 pub fn replace_1_let(i: &str) -> ParserResult<String> {
     map(
         many_till(anychar, write_var_or_let.and(tag("let "))),
-        |(x1, (mut varlet, _))| {
+        |(x1, (varlet, _))| {
             let mut v = x1.iter().collect::<String>();
             v.push_str(&varlet);
             v
@@ -370,8 +327,6 @@ pub fn replace_1_let(i: &str) -> ParserResult<String> {
 pub fn replace_all_let(i: &str) -> ParserResult<String> {
     map(many0(replace_1_let), |x2| x2.join(""))(i)
 }
-
-// TODO: match
 
 pub fn let2var_parser(i: &str) -> ParserResult<String> {
     map(

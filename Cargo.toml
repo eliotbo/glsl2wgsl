@@ -33,5 +33,5 @@ name = "ex"
 path = "examples/ex.rs"
 
 [[example]]
-name = "replace_let"
-path = "examples/replace_let.rs"
+name = "add_span_to_str"
+path = "examples/add_span_to_str.rs"

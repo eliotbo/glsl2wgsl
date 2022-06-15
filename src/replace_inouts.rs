@@ -1,25 +1,14 @@
-// This parser finds all instances of uniform variables (say iResolution) and inserts the
-// "uni." root variable name (e.g. uni.iResolution)
-
-// use nom::branch::alt;
-// use nom::bytes::complete::tag;
-// use nom::character::complete::anychar;
-
-// use nom::combinator::{eof, map};
-// use nom::error::VerboseError;
-// use nom::multi::{many0, many_till};
+// This parser finds function arguments with the "inout" storage qualifier and replaces them
+// with pointers throughout the function body.
 
 use nom::branch::alt;
-use nom::bytes::complete::{is_not, tag, take_until, take_while1};
-use nom::character::complete::{
-    alpha1, alphanumeric1, anychar, char, digit1, line_ending, multispace0, multispace1, one_of,
-    space0, space1,
-};
-use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{count, fold_many0, many0, many0_count, many1, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+use nom::bytes::complete::{tag, take_while1};
+use nom::character::complete::{alpha1, alphanumeric1, anychar, char, multispace0, one_of};
+
+use nom::combinator::{eof, map, peek, recognize, verify};
+use nom::error::VerboseError;
+use nom::multi::{many0, many_till, separated_list0};
+use nom::sequence::{delimited, pair, preceded};
 use nom::Parser;
 
 use nom::IResult;
@@ -72,9 +61,6 @@ pub fn rest_of_script(i: &str) -> ParserResult<String> {
     map(many_till(anychar, eof), |x| x.0.iter().collect())(i)
 }
 
-// TODO: make argument detection more robust with parenthesis
-// tracking ((())), since argument can have parentheses and
-// commas in them
 pub fn argument1(i: &str) -> ParserResult<String> {
     map(many_till(anychar, peek(one_of(",)"))), |x| {
         x.0.iter().collect::<String>()
@@ -92,7 +78,6 @@ pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
             ),
             tag(")"),
         ),
-        // |x: Vec<&str>| x.iter().map(|y| y.to_string()).collect::<Vec<String>>(),
         |x: Vec<String>| x,
     )(i)
 }
@@ -132,13 +117,7 @@ pub fn search_and_replace_void(i: &str) -> ParserResult<String> {
 pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
     map(
         many_till(
-            many_till(
-                anychar,
-                // alt((tag(&*v), eof)),
-                // verify(identifier, |(x, id)| x.to_string() == v),
-                // alt(identifier_check(v.to_string())),
-                alt((verify(identifier, |x| x == v), eof)),
-            ),
+            many_till(anychar, alt((verify(identifier, |x| x == v), eof))),
             eof,
         ),
         |x| {
@@ -156,7 +135,6 @@ pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserR
                 } else {
                     ret.push_str(&name);
                 }
-                // ret.push_str(&num);
             }
             ret
         },
@@ -176,8 +154,6 @@ pub fn till_next_brace(i: &str) -> ParserResult<(String, String)> {
 }
 
 pub fn get_function_body(i: &str, mut scope: u32) -> ParserResult<String> {
-    //
-    // let text_and_backet: ParserResult<(String, String)> = till_next_brace(i); // (scope, body_so_far)
     let mut parsed_text: String = "".to_string();
     let mut rest = i;
     loop {
@@ -191,7 +167,6 @@ pub fn get_function_body(i: &str, mut scope: u32) -> ParserResult<String> {
         } else {
             scope -= 1;
         }
-        // println!("{} -> {}", brace, scope);
 
         if scope == 0 {
             break;
@@ -242,7 +217,7 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
                     //
                     if let Some(no_inout) = maybe_inout.strip_prefix("inout ") {
                         let stripped_inout = no_inout.to_string();
-                        println!("stripped_inout: {}", stripped_inout);
+
                         if let Ok((_, added_ptr_type)) = add_ptr_to_arg(&stripped_inout) {
                             added_ptr_type
                         } else {
@@ -258,11 +233,8 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
         },
     )(i)?;
 
-    // println!("parsed: {:?}", parsed_func_def);
-
     let (rest, mut body) = get_function_body(rest, 0)?;
 
-    // println!("arguments: {:?}", arguments);
     for arg in arguments.iter() {
         if let Ok((_, inout_arg_name)) = check_inout_arg(arg) {
             let ptr = "(*".to_string() + &inout_arg_name + ")";

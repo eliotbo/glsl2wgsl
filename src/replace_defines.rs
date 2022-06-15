@@ -1,22 +1,10 @@
-// This parser finds all instances of uniform variables (say iResolution) and inserts the
-// "uni." root variable name (e.g. uni.iResolution)
+use nom::bytes::complete::{tag, take_while1};
+use nom::character::complete::{anychar, space1};
 
-// use nom::branch::alt;
-// use nom::bytes::complete::tag;
-// use nom::character::complete::anychar;
-
-// use nom::combinator::{eof, map};
-// use nom::error::VerboseError;
-// use nom::multi::{many0, many_till};
-
-use nom::branch::alt;
-use nom::bytes::complete::{tag, take_until, take_while1};
-use nom::character::complete::{anychar, char, digit1, line_ending, multispace1, space0, space1};
-use nom::character::{is_hex_digit, is_oct_digit};
-use nom::combinator::{cut, eof, map, not, opt, peek, recognize, success, value, verify};
-use nom::error::{ErrorKind, ParseError as _, VerboseError, VerboseErrorKind};
-use nom::multi::{fold_many0, many0, many1, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple};
+use nom::combinator::{eof, map};
+use nom::error::VerboseError;
+use nom::multi::{many0, many_till};
+use nom::sequence::preceded;
 use nom::Parser;
 
 use nom::IResult;
