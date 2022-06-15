@@ -1799,7 +1799,7 @@ pub fn show_compound_statement<F>(f: &mut F, cst: &syntax::CompoundStatement, i:
 where
     F: Write,
 {
-    // let _ = f.write_str("\n");
+    let _ = f.write_str("\n");
 
     for st in &cst.statement_list {
         // let _ = f.write_str("    ");
@@ -1878,15 +1878,15 @@ where
         }
     }
 
-    let _ = f.write_str("\n");
+    // let _ = f.write_str("\n");
     indent(f, i);
     let _ = f.write_str("if (");
     show_expr(f, &sst.cond);
     let _ = f.write_str(") {");
 
-    if !is_single_line {
-        let _ = f.write_str("\n");
-    }
+    // if !is_single_line {
+    // let _ = f.write_str("\n");
+    // }
 
     show_selection_rest_statement(f, &sst.rest, i, is_single_line);
     // let _ = f.write_str("\n");

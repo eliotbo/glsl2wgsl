@@ -438,7 +438,9 @@ float Reintegration()
 fn main() {
 
   let mut replaced_defines_func: String;
-  replaced_defines_func = func_definition_parser(&DEF_RANGE).unwrap().1;
+  // replaced_defines_func = func_definition_parser(&IF_SINGLE).unwrap().1;
+  // replaced_defines_func = func_definition_parser(&IF).unwrap().1;
+  replaced_defines_func = func_definition_parser(&VAR_DOT).unwrap().1;
 
 
 
@@ -459,7 +461,7 @@ fn main() {
 
   fs::write("./foo.txt", &buf).expect("Unable to write file");
   
-  // println!("{:?}", trans);
+  println!("{:?}", trans);
   // println!("{:?}", buf);
 
 

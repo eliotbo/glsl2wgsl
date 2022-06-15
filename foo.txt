@@ -1,10 +1,9 @@
-Reintegration() -> f32 {
-	for (var i: i32 = -2; i <= 2; i = i + 1) {
-	for (var j: i32 = -2; j <= 2; j = j + 1) {		a = 2;
-		b = 3;
-	}
-
-	}
-
+let t: f32 = 1.;
+main()  {
+	let atj: f32 = 4.;
+	var atjxy = atj.xy;
+	atjxy = 5;
+	atj.x = atjxy.x;
+	atj.y = atjxy.y;
 } 
 
