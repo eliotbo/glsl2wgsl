@@ -31,9 +31,9 @@ pub fn erase_one_define(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-pub fn rest_of_script(i: &str) -> ParserResult<String> {
-    map(many_till(anychar, eof), |x| x.0.iter().collect())(i)
-}
+// pub fn rest_of_script(i: &str) -> ParserResult<String> {
+//     map(many_till(anychar, eof), |x| x.0.iter().collect())(i)
+// }
 
 pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
     map(

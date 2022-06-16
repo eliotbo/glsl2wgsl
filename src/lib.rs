@@ -88,7 +88,6 @@ pub fn do_parse(x: String) -> String {
                 let defi = definition_parser(&unis.1).unwrap().1;
                 let upda = replace_main_line(&defi).unwrap().1;
                 let inout = replace_inouts(&upda).unwrap().1;
-                //
                 buf = search_and_replace_void(&inout).unwrap().1;
                 buf = replace_all_texture_and_texel_fetch(&buf).unwrap().1;
 
