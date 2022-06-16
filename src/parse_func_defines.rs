@@ -2,54 +2,19 @@
 // and replaces all instances of func() with other_func().
 
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while1};
-use nom::character::complete::{alpha1, alphanumeric1, anychar, char, multispace0, space1};
-
-use nom::combinator::{eof, map, peek, recognize, success, verify};
+use nom::bytes::complete::tag;
+use nom::character::complete::{anychar, multispace0, space1};
+use nom::combinator::{eof, map, success, verify};
 use nom::error::VerboseError;
-use nom::multi::{many0, many_till, separated_list0};
-use nom::sequence::{delimited, pair, preceded};
+use nom::multi::{many0, many_till};
+use nom::sequence::preceded;
 
 use nom::IResult;
 use nom::Parser;
 
-pub use crate::nom_helpers::*;
+use crate::nom_helpers::*;
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
-
-fn identifier_hashtag(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' || ch == '#'
-}
-
-fn identifier_num_pred(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' || ch == '.'
-}
-
-fn func_pred(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' || ch == '(' || ch == ' ' || ch == ')' || ch == ','
-}
-
-pub fn anychar_underscore(i: &str) -> ParserResult<String> {
-    map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
-}
-
-pub fn anychar_underscore_hashtag(i: &str) -> ParserResult<String> {
-    map(take_while1(identifier_hashtag), |v: &str| v.to_string())(i)
-}
-
-pub fn anychar_func(i: &str) -> ParserResult<String> {
-    map(take_while1(func_pred), |v: &str| v.to_string())(i)
-}
-
-pub fn blank_space(i: &str) -> ParserResult<String> {
-    map(recognize(many0(alt((multispace0, tag("\\\n"))))), |_x| {
-        "".to_string()
-    })(i)
-}
-
-pub fn blank_space2(i: &str) -> ParserResult<String> {
-    map(many0(alt((multispace0, tag("\t")))), |_x| "".to_string())(i)
-}
 
 pub fn erase_one_define(i: &str) -> ParserResult<String> {
     map(
@@ -62,25 +27,8 @@ pub fn erase_one_define(i: &str) -> ParserResult<String> {
                 many_till(anychar, tag("\n")),
             ),
         ),
-        // .and(rest_of_script),
-        // |x| x.0 .0.iter().collect::<String>() + &x.1,
         |x| x.0.iter().collect(),
     )(i)
-}
-
-pub fn identifier(input: &str) -> ParserResult<&str> {
-    map(
-        recognize(pair(
-            alt((alpha1, tag("_"))),
-            many0(alt((alphanumeric1, tag("_")))),
-        ))
-        // make sure the next character is not part of the identifier
-        .and(peek(verify(anychar, |x| !x.is_alphanumeric()))),
-        |x: (&str, char)| {
-            let ret = x.0;
-            ret
-        },
-    )(input)
 }
 
 pub fn rest_of_script(i: &str) -> ParserResult<String> {
@@ -94,135 +42,7 @@ pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
-    map(
-        many_till(anychar, alt((tag("("), tag(")"), tag(",")))),
-        |(so_far, brack): (Vec<char>, &str)| {
-            //
-            let text = so_far.iter().collect::<String>();
-            return (text, brack.to_string());
-        },
-    )(i)
-}
-
-// parse one argument of a function call
-pub fn argument1(i: &str) -> ParserResult<String> {
-    let mut parsed_text: String = "".to_string();
-    let mut scope = 0;
-    let mut rest = i;
-    loop {
-        let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
-            till_next_paren_or_comma(rest)?;
-        rest = rest1;
-        parsed_text += &text_so_far;
-
-        match paren_or_comma.as_str() {
-            "(" => scope += 1,
-            ")" => {
-                scope -= 1;
-
-                // end of function call
-                if scope == -1 {
-                    break;
-                }
-            }
-            _ => {
-                // case of a comma
-                // end of argument
-                if scope == 0 {
-                    break;
-                }
-            }
-        }
-
-        parsed_text += &paren_or_comma;
-    }
-
-    Ok((rest, parsed_text))
-}
-
-pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
-    map(
-        preceded(
-            tag("("),
-            many0(delimited(multispace0, argument1, multispace0)),
-        ),
-        |x: Vec<String>| x,
-    )(i)
-}
-
-pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
-    map(
-        delimited(
-            tag("("),
-            separated_list0(
-                delimited(multispace0, char(','), multispace0),
-                anychar_underscore,
-            ),
-            tag(")"),
-        ),
-        |x| x,
-    )(i)
-}
-
-// search (v, where v is an identifier) and replace by (num, which can be anychar)
-pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
-    map(
-        many_till(
-            many_till(
-                anychar,
-                alt((
-                    verify(anychar_underscore_hashtag, |x: &str| x.to_string() == v),
-                    map(eof, |x: &str| x.to_string()),
-                )),
-            ),
-            eof,
-        ),
-        |x| {
-            //
-
-            let mut ret = "".to_string();
-            for (v_chars, name) in x.0.iter() {
-                ret.push_str(&v_chars.iter().collect::<String>());
-                if name == &v {
-                    ret.push_str(&num);
-                }
-            }
-            ret
-        },
-    )(i)
-}
-
-// search (v, where v is an identifier) and replace by (num, which can be anychar)
-pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
-    map(
-        many_till(
-            many_till(anychar, alt((verify(identifier, |x| x == v), eof))),
-            eof,
-        ),
-        |x| {
-            // makes sure that the identifier does not have any other alphanum characters
-            // before and after it
-            let mut ret = "".to_string();
-            for (v_chars, name) in x.0.iter() {
-                ret.push_str(&v_chars.iter().collect::<String>());
-                if let Some(c) = ret.chars().last() {
-                    if name == &v && !c.is_alphanumeric() {
-                        ret.push_str(&num);
-                    } else {
-                        ret.push_str(&name);
-                    }
-                } else {
-                    ret.push_str(&name);
-                }
-            }
-
-            ret
-        },
-    )(i)
-}
-
-pub fn replace_tag(i: &str) -> ParserResult<(String, Vec<String>)> {
+pub fn replace_define_tag(i: &str) -> ParserResult<(String, Vec<String>)> {
     map(
         preceded(tag("#define").and(space1), anychar_underscore).and(function_call_args),
         |x| x,
@@ -237,9 +57,10 @@ pub struct DefineFunc {
 }
 
 pub fn get_name_and_args(i: &str) -> ParserResult<(String, Vec<String>)> {
-    map(many_till(anychar, replace_tag), |(_v, (name, args))| {
-        (name, args)
-    })(i)
+    map(
+        many_till(anychar, replace_define_tag),
+        |(_v, (name, args))| (name, args),
+    )(i)
 }
 
 // TODO: right now, the end of a defined function is detected with a newline char.

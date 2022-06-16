@@ -1,11 +1,8 @@
 //! GLSL parsers.
 //!
-//! The more general parser is `translation_unit`, that recognizes the most external form of a GLSL
-//! source (a shader, basically).
+//! Parsing starts by calling `translation_unit` with a GLSL shader as an argument
 //!
-//! Other parsers are exported if you want more control on how you want to parse your source.
-
-// pub mod nom_helpers;
+//! Original AST from Dimitri Sabadie's glsl crate: https://github.com/phaazon/glsl
 
 use core::num::ParseIntError;
 use nom::branch::alt;
@@ -19,7 +16,7 @@ use nom::sequence::{delimited, pair, preceded, separated_pair, terminated, tuple
 use nom::{Err as NomErr, ParseTo};
 
 use crate::nom_helpers::{
-    blank_space_span, cnst_span, eol_span, many0__span, str_till_eol_span, ParseError,
+    blank_space_span, cnst_span, eol_span, many0_span_disc, str_till_eol_span, ParseError,
 };
 pub use crate::nom_helpers::{IResult2, Span};
 use crate::syntax;
@@ -30,17 +27,6 @@ fn keyword<'a>(kwd: &'a str) -> impl FnMut(Span<'a>) -> IResult2<Span> {
         tag(kwd),
         not(verify(peek(anychar), |&c| identifier_pred(c))),
     )
-}
-
-/// Parse a single comment.
-pub fn comment(i: Span) -> IResult2<Span> {
-    preceded(
-        char('/'),
-        alt((
-            preceded(char('/'), cut(str_till_eol_span)),
-            preceded(char('*'), cut(terminated(take_until("*/"), tag("*/")))),
-        )),
-    )(i)
 }
 
 /// Parse a single comment.
@@ -56,24 +42,9 @@ pub fn comment_span(i: Span) -> IResult2<Span> {
 
 /// Parse several comments.
 pub fn comments_span(i: Span) -> IResult2<Span> {
-    recognize(many0__span(terminated(comment_span, blank_space_span)))(i)
+    recognize(many0_span_disc(terminated(comment_span, blank_space_span)))(i)
 }
 
-// /// Parse several comments.
-// pub fn comments(i: Span) -> IResult2<&str> {
-//     recognize(many0_(terminated(comment_span, blank_space)))(i)
-// }
-
-// /// In-between token parser (spaces and comments).
-// ///
-// /// This parser also allows to break a line into two by finishing the line with a backslack ('\').
-// fn blank(i: Span) -> IResult2<()> {
-//     value((), preceded(blank_space, comments))(i)
-// }
-
-/// In-between token parser (spaces and comments).
-///
-/// This parser also allows to break a line into two by finishing the line with a backslack ('\').
 fn blank_span(i: Span) -> IResult2<()> {
     value((), preceded(blank_space_span, comments_span))(i)
 }
@@ -1754,7 +1725,7 @@ pub(crate) fn pp_version_profile(i: Span) -> IResult2<syntax::PreprocessorVersio
 ///
 /// This parser is needed to authorize breaking a line with the multiline annotation (\).
 pub(crate) fn pp_space0(i: Span) -> IResult2<Span> {
-    recognize(many0__span(alt((space1, tag("\\\n")))))(i)
+    recognize(many0_span_disc(alt((space1, tag("\\\n")))))(i)
 }
 
 /// Parse a preprocessor define.

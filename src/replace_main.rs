@@ -1,38 +1,18 @@
 // This parser replaces the main function line, typically
 // "fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {",
-// by a large code block
+// by the UPDATE_INIT code block below
 
 use nom::bytes::complete::{tag, take_while1};
 use nom::character::complete::anychar;
 use nom::combinator::{eof, map, opt};
-use nom::error::VerboseError;
 use nom::multi::{many_till, separated_list1};
 use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
 
-use nom::IResult;
+use crate::nom_helpers::*;
 
-pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
-
-// pub fn blank_space(i: &str) -> ParserResult<String> {
-//     map(recognize(many0(alt((multispace0, tag("\\\n"))))), |x| {
-//         "".to_string()
-//     })(i)
-// }
-
-// pub fn blank_space2(i: &str) -> ParserResult<String> {
-//     map(many0(alt((multispace0, tag("\t")))), |x| "".to_string())(i)
-// }
-
-fn identifier_num_pred(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' || ch == '.'
-}
 fn identifier_type_pred(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_' || ch == '<' || ch == '>'
-}
-
-pub fn anychar_underscore(i: &str) -> ParserResult<String> {
-    map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
 }
 
 pub fn anychar_type(i: &str) -> ParserResult<String> {

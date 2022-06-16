@@ -4,19 +4,13 @@
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::anychar;
-
 use nom::combinator::{eof, map};
-use nom::error::VerboseError;
 use nom::multi::{many0, many_till};
-
-use nom::IResult;
 use nom::Parser;
 
-pub use crate::nom_helpers::{IResult2, Span};
+pub use crate::nom_helpers::{IResult2, ParserResult, Span};
 
-pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
-
-pub fn replace_uni(i: &str) -> ParserResult<String> {
+fn replace_uni(i: &str) -> ParserResult<String> {
     map(many_till(anychar, replace_tag), |(v, s)| {
         let mut v2 = v.iter().collect::<String>();
         v2.push_str(&s);
@@ -24,7 +18,7 @@ pub fn replace_uni(i: &str) -> ParserResult<String> {
     })(i)
 }
 
-pub fn replace_tag(i: &str) -> ParserResult<String> {
+fn replace_tag(i: &str) -> ParserResult<String> {
     map(
         alt((
             tag("iResolution"),
@@ -45,7 +39,7 @@ pub fn replace_tag(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-pub fn replace_all_unis(i: &str) -> ParserResult<String> {
+fn replace_all_unis(i: &str) -> ParserResult<String> {
     map(many0(replace_uni), |x2| x2.join(""))(i)
 }
 

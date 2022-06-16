@@ -850,27 +850,7 @@ where
                 let _ = f.write_str(")");
             }
         }
-        syntax::Expr::TernaryWGSL(ref i, ref c, ref s, ref e) => {
-            // Note: ternary is right-to-left associative (<= for right part)
-
-            if c.precedence() < expr.precedence() {
-                show_expr(f, &c);
-            } else {
-                let _ = f.write_str("(");
-                show_expr(f, &c);
-                let _ = f.write_str(")");
-            }
-            let _ = f.write_str(" ? ");
-            show_expr(f, &s);
-            let _ = f.write_str(" : ");
-            if e.precedence() <= expr.precedence() {
-                show_expr(f, &e);
-            } else {
-                let _ = f.write_str("(");
-                show_expr(f, &e);
-                let _ = f.write_str(")");
-            }
-        }
+        syntax::Expr::TernaryWGSL(ref _i, ref _c, ref _s, ref _e) => {}
         syntax::Expr::Assignment(ref v, ref op, ref e) => {
             // Note: all assignment ops are right-to-left associative
 

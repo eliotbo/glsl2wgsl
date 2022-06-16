@@ -96,6 +96,6 @@ fn main() {
 
     fs::write("./foo.txt", &buf).expect("Unable to write file");
 
-    println!("{:?}", trans);
+    // println!("{:?}", trans);
     // println!("{:?}", buf);
 }

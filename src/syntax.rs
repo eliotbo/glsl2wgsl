@@ -1,22 +1,6 @@
 //! GLSL abstract syntax tree and grammar.
 //!
-//! This module exports all the grammar syntax that defines GLSL. You’ll be handling ASTs
-//! representing your GLSL source.
-//!
-//! The most external form of a GLSL parsed AST is [`TranslationUnit`] (a shader). Some parts of the
-//! tree are *boxed*. This is due to two facts:
-//!
-//! - Recursion is used, hence we need a way to give our types a static size.
-//! - Because of some very deep variants, runtime size would explode if no indirection weren’t
-//!   in place.
-//!
-//! The types are commented so feel free to inspect each of theme. As a starter, you should read
-//! the documentation of [`Expr`], [`FunctionDefinition`], [`Statement`] and [`TranslationUnit`].
-//!
-//! [`Statement`]: crate::syntax::Statement
-//! [`TranslationUnit`]: crate::syntax::TranslationUnit
-//! [`Expr`]: crate::syntax::Expr
-//! [`FunctionDefinition`]: crate::syntax::FunctionDefinition
+//! Original AST from Dimitri Sabadie's glsl crate: https://github.com/phaazon/glsl
 
 use core::fmt;
 use core::iter::{once, FromIterator};

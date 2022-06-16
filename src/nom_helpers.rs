@@ -1,57 +1,27 @@
 //! Various nom parser helpers.
 
-use nom::branch::{alt, Alt};
+use nom::branch::alt;
 use nom::bytes::complete::{tag, take_until, take_while1};
-use nom::character::complete::{anychar, char, digit1, line_ending, multispace1};
+use nom::character::complete::{anychar, char, line_ending, multispace0, multispace1};
 // use nom::combinator::{map, recognize, value, verify};
-use nom::combinator::{cut, map, not, opt, peek, recognize, value, verify};
+use nom::combinator::{cut, eof, map, peek, recognize, value, verify};
 // use nom::error::{ErrorKind, ParseError, VerboseError, VerboseErrorKind};
 use nom::error::{ErrorKind, VerboseError, VerboseErrorKind};
-use nom::multi::fold_many0;
+use nom::multi::{fold_many0, many0, many_till, separated_list0};
 use nom::{Err as NomErr, IResult};
 
 use nom::{
     character::complete::{alpha1, alphanumeric1},
-    multi::many0,
-    sequence::{delimited, pair},
+    sequence::{delimited, pair, preceded},
+    Parser,
 };
 
-use nom_locate::{position, LocatedSpan};
+use nom_locate::LocatedSpan;
 // use nom::error::ParseError;
 
 pub type Span<'a> = LocatedSpan<&'a str>;
 
-struct Token<'a> {
-    pub position: Span<'a>,
-    pub foo: &'a str,
-    pub bar: &'a str,
-}
-
-fn parse_foobar(s: Span) -> IResult<Span, Token> {
-    let (s, _) = take_until("foo")(s)?;
-    let (s, pos) = position(s)?;
-    let (s, foo) = tag("foo")(s)?;
-    let (s, bar) = tag("bar")(s)?;
-
-    Ok((
-        s,
-        Token {
-            position: pos,
-            foo: foo.fragment(),
-            bar: bar.fragment(),
-        },
-    ))
-}
-
-fn aw() {
-    let input = Span::new("Lorem ipsum \n foobar");
-    let output = parse_foobar(input);
-    let position = output.unwrap().1.position;
-    assert_eq!(position.location_offset(), 14);
-    assert_eq!(position.location_line(), 2);
-    assert_eq!(position.fragment(), &"");
-    assert_eq!(position.get_column(), 2);
-}
+pub const ALPHANUM_UNDER: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789";
 
 pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
 pub type ParserResult2<'a, O> = IResult<Span<'a>, O, VerboseError<&'a str>>;
@@ -99,24 +69,6 @@ impl<'a> nom::error::ParseError<Span<'a>> for ParseError<'a> {
     }
 }
 
-fn identifier(input: Span) -> IResult<Span, Token> {
-    // [a-zA-Z_][a-zA-Z0-9_]*
-    let (rest, m) = recognize(pair(
-        alt((alpha1, tag("_"))),
-        many0(alt((alphanumeric1, tag("_")))),
-    ))(input)?;
-
-    let (s, pos) = position(rest)?;
-    let (s, foo) = tag("foo")(rest)?;
-    let (s, bar) = tag("bar")(rest)?;
-
-    let token = Token {
-        position: pos,
-        foo: &foo,
-        bar: &bar,
-    };
-    Ok((rest, token))
-}
 // A constant parser that just forwards the value it’s parametered with without reading anything
 // from the input. Especially useful as “fallback” in an alternative parser.
 //
@@ -223,7 +175,7 @@ where
 }
 
 // A version of many0 that discards the result of the parser, preventing allocating.
-pub fn many0__span<'a, A, F>(mut f: F) -> impl FnMut(Span<'a>) -> IResult2<'a, ()>
+pub fn many0_span_disc<'a, A, F>(mut f: F) -> impl FnMut(Span<'a>) -> IResult2<'a, ()>
 where
     F: FnMut(Span<'a>) -> IResult2<'a, A>,
 {
@@ -259,7 +211,7 @@ pub fn str_till_eol_span(i: Span) -> IResult2<Span> {
         eol_span,
     ));
     map(parser, |ii| {
-        let mut w = ii;
+        let w = ii;
         if w.as_bytes().last() == Some(&b'\n') {
             LocatedSpan::new(&w[0..w.len() - 1])
         } else {
@@ -271,14 +223,22 @@ pub fn str_till_eol_span(i: Span) -> IResult2<Span> {
 // Blank base parser.
 //
 // This parser succeeds with multispaces and multiline annotation.
-//
-// Taylor Swift loves it.
 pub fn blank_space(i: &str) -> ParserResult<&str> {
     recognize(many0_(alt((multispace1, tag("\\\n")))))(i)
 }
 
 pub fn blank_space_span(i: Span) -> IResult2<Span> {
-    recognize(many0__span(alt((multispace1, tag("\\\n")))))(i)
+    recognize(many0_span_disc(alt((multispace1, tag("\\\n")))))(i)
+}
+
+// pub fn blank_space(i: &str) -> ParserResult<String> {
+//     map(recognize(many0(alt((multispace0, tag("\\\n"))))), |_x| {
+//         "".to_string()
+//     })(i)
+// }
+
+pub fn blank_space2(i: &str) -> ParserResult<String> {
+    map(many0(alt((multispace0, tag("\t")))), |_x| "".to_string())(i)
 }
 
 /// Parse a path literal with double quotes.
@@ -290,16 +250,222 @@ pub fn path_lit_relative(i: Span) -> IResult2<Span> {
 }
 
 #[inline]
-fn identifier_pred(ch: char) -> bool {
+pub fn identifier_pred(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
 }
 
+pub fn identifier_num_pred(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '.'
+}
+
+fn func_pred(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '(' || ch == ' ' || ch == ')' || ch == ','
+}
+
 #[inline]
-fn verify_identifier(s: &Span) -> bool {
+pub fn verify_identifier(s: &Span) -> bool {
     !char::from(s.fragment().as_bytes()[0]).is_digit(10)
 }
 
+fn identifier_hashtag(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_' || ch == '#'
+}
+
+pub fn anychar_func(i: &str) -> ParserResult<String> {
+    map(take_while1(func_pred), |v: &str| v.to_string())(i)
+}
+
 /// Parse an identifier (raw version).
-fn identifier_str(i: Span) -> IResult2<Span> {
+fn _identifier_str(i: Span) -> IResult2<Span> {
     verify(take_while1(identifier_pred), verify_identifier)(i)
+}
+
+pub fn identifier(input: &str) -> ParserResult<&str> {
+    map(
+        recognize(pair(
+            alt((alpha1, tag("_"))),
+            many0(alt((alphanumeric1, tag("_")))),
+        ))
+        // make sure the next character is not part of the identifier
+        .and(peek(verify(anychar, |x| !x.is_alphanumeric()))),
+        |x: (&str, char)| {
+            let ret = x.0;
+            ret
+        },
+    )(input)
+}
+
+pub fn anychar_underscore(i: &str) -> ParserResult<String> {
+    map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
+}
+
+pub fn anychar_underscore_hashtag(i: &str) -> ParserResult<String> {
+    map(take_while1(identifier_hashtag), |v: &str| v.to_string())(i)
+}
+
+pub fn rest_of_script(i: &str) -> ParserResult<String> {
+    map(many_till(anychar, eof), |x| x.0.iter().collect())(i)
+}
+
+// search (v, where v is an identifier) and replace by (num, which can be anychar)
+pub fn search_and_replace_identifier(i: &str, v: String, num: String) -> ParserResult<String> {
+    map(
+        many_till(
+            many_till(anychar, alt((verify(identifier, |x| x == v), eof))),
+            eof,
+        ),
+        |x| {
+            // makes sure that the identifier does not have any other alphanum characters
+            // before and after it
+            let mut ret = "".to_string();
+            for (v_chars, name) in x.0.iter() {
+                ret.push_str(&v_chars.iter().collect::<String>());
+                if let Some(c) = ret.chars().last() {
+                    if name == &v && !c.is_alphanumeric() {
+                        ret.push_str(&num);
+                    } else {
+                        ret.push_str(&name);
+                    }
+                } else {
+                    ret.push_str(&name);
+                }
+            }
+
+            ret
+        },
+    )(i)
+}
+
+// search (v, where v is an identifier) and replace by (num, which can be anychar)
+pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<String> {
+    map(
+        many_till(
+            many_till(
+                anychar,
+                alt((
+                    verify(anychar_underscore_hashtag, |x: &str| x.to_string() == v),
+                    map(eof, |x: &str| x.to_string()),
+                )),
+            ),
+            eof,
+        ),
+        |x| {
+            //
+
+            let mut ret = "".to_string();
+            for (v_chars, name) in x.0.iter() {
+                ret.push_str(&v_chars.iter().collect::<String>());
+                if name == &v {
+                    ret.push_str(&num);
+                }
+            }
+            ret
+        },
+    )(i)
+}
+
+pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
+    map(
+        many_till(anychar, alt((tag("("), tag(")"), tag(",")))),
+        |(so_far, brack): (Vec<char>, &str)| {
+            //
+            let text = so_far.iter().collect::<String>();
+            return (text, brack.to_string());
+        },
+    )(i)
+}
+
+// parse one argument of a function call
+pub fn argument1(i: &str) -> ParserResult<String> {
+    let mut parsed_text: String = "".to_string();
+    let mut scope = 0;
+    let mut rest = i;
+    loop {
+        let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
+            till_next_paren_or_comma(rest)?;
+        rest = rest1;
+        parsed_text += &text_so_far;
+
+        match paren_or_comma.as_str() {
+            "(" => scope += 1,
+            ")" => {
+                scope -= 1;
+
+                // end of function call
+                if scope == -1 {
+                    break;
+                }
+            }
+            _ => {
+                // case of a comma
+                // end of argument
+                if scope == 0 {
+                    break;
+                }
+            }
+        }
+
+        parsed_text += &paren_or_comma;
+    }
+
+    Ok((rest, parsed_text))
+}
+
+pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
+    map(
+        preceded(
+            tag("("),
+            many0(delimited(multispace0, argument1, multispace0)),
+        ),
+        |x: Vec<String>| x,
+    )(i)
+}
+
+pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
+    map(
+        delimited(
+            tag("("),
+            separated_list0(
+                delimited(multispace0, char(','), multispace0),
+                anychar_underscore,
+            ),
+            tag(")"),
+        ),
+        |x| x,
+    )(i)
+}
+
+pub fn till_next_brace(i: &str) -> ParserResult<(String, String)> {
+    map(
+        many_till(anychar, alt((tag("{"), tag("}")))),
+        |(so_far, brack): (Vec<char>, &str)| {
+            //
+
+            let text = so_far.iter().collect::<String>();
+            return (text, brack.to_string());
+        },
+    )(i)
+}
+
+pub fn get_function_body(i: &str, mut scope: u32) -> ParserResult<String> {
+    let mut parsed_text: String = "".to_string();
+    let mut rest = i;
+    loop {
+        let (rest1, (text_so_far, brace)): (&str, (String, String)) = till_next_brace(rest)?;
+        rest = rest1;
+        parsed_text += &text_so_far;
+        parsed_text += &brace;
+
+        if brace == "{" {
+            scope += 1;
+        } else {
+            scope -= 1;
+        }
+
+        if scope == 0 {
+            break;
+        }
+    }
+
+    return Ok((rest, (parsed_text)));
 }

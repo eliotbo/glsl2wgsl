@@ -9,7 +9,7 @@ use glsl2wgsl::replace_main::replace_main_line;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
 use glsl2wgsl::transpiler::wgsl::show_translation_unit;
 // use glsl2wgsl::var_private_parser::add_private_to_global_vars;
-use glsl2wgsl::parse_func_defines::{func_definition_parser, function_call_args_anychar};
+use glsl2wgsl::parse_func_defines::func_definition_parser;
 use glsl2wgsl::replace_inouts::{replace_inouts, search_and_replace_void};
 use glsl2wgsl::replace_texel_fetch::*;
 

@@ -1,32 +1,20 @@
+// replaces the #defines lines that have no arguments with
+// a var<private> declaration
+
+use crate::nom_helpers::*;
 use nom::bytes::complete::{tag, take_while1};
 use nom::character::complete::{anychar, space1};
-
 use nom::combinator::{eof, map};
-use nom::error::VerboseError;
 use nom::multi::{many0, many_till};
 use nom::sequence::preceded;
 use nom::Parser;
 
-use nom::IResult;
-
-pub use crate::nom_helpers::{IResult2, Span};
-
-pub type ParserResult<'a, O> = IResult<&'a str, O, VerboseError<&'a str>>;
-
 pub fn replace_define(i: &str) -> ParserResult<String> {
-    map(many_till(anychar, replace_tag), |(v, s)| {
+    map(many_till(anychar, replace_define_tag), |(v, s)| {
         let mut v2 = v.iter().collect::<String>();
         v2.push_str(&s);
         v2
     })(i)
-}
-
-fn identifier_num_pred(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' || ch == '.'
-}
-
-pub fn anychar_underscore(i: &str) -> ParserResult<String> {
-    map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
 }
 
 pub fn parse_define(i: &str) -> ParserResult<String> {
@@ -45,7 +33,7 @@ pub fn parse_define(i: &str) -> ParserResult<String> {
     )(i)
 }
 
-pub fn replace_tag(i: &str) -> ParserResult<String> {
+pub fn replace_define_tag(i: &str) -> ParserResult<String> {
     map(preceded(tag("#define").and(space1), parse_define), |x| x)(i)
 }
 

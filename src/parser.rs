@@ -1,20 +1,11 @@
 //! GLSL parsing.
 //!
-//! This module gives you several functions and types to deal with GLSL parsing, transforming an
-//! input source into an AST. The AST is defined in the [`syntax`] module.
-//!
-//! You want to use the [`Parse`]’s methods to get starting with parsing and pattern match on
-//! the resulting [`Result`]. In case of an error, you can inspect the content of the [`ParseError`]
-//! object in the `Err` variant.
-//!
-//! [`Parse`]: crate::parser::Parse
-//! [`ParseError`]: crate::parser::ParseError
+//! Original AST from Dimitri Sabadie's glsl crate: https://github.com/phaazon/glsl
 
 use crate::nom_helpers::{IResult2, ParseError, Span};
 use crate::syntax;
 use nom::Err as NomErr;
 
-/// Run a parser `P` on a given `[&str`] input.
 pub(crate) fn run_parser<P, T>(source: Span, parser: P) -> Result<T, ParseError>
 where
     P: FnOnce(Span) -> IResult2<T>,
@@ -25,33 +16,15 @@ where
         Err(e) => match e {
             NomErr::Incomplete(_) => Err(ParseError::new("incomplete parser".to_string(), source)),
 
-            //  Err(ParseError {
-            //     info: "incomplete parser".to_string(),
-            // }),
-            NomErr::Error(err) | NomErr::Failure(err) => {
-                // // let info = convert_error(*source.fragment(), err);
-                // if let Some(message) = err.message {
-                //   Err(ParseError::new(err.message, source))
-                //   else {
-                //     Err(ParseError::new("no error message passed", source))
-                //   }
-                Err(err)
-            }
+            NomErr::Error(err) | NomErr::Failure(err) => Err(err),
         },
     }
 }
 
-/// Class of types that can be parsed.
-///
-/// This trait exposes the [`Parse::parse`] function that can be used to parse GLSL types.
-///
-/// The methods from this trait are the standard way to parse data into GLSL ASTs.
 pub trait Parse: Sized {
-    /// Parse from a string slice.
     fn parse<'a>(source: Span<'a>) -> Result<Self, ParseError<'a>>;
 }
 
-/// Macro to implement Parse for a given type.
 macro_rules! impl_parse {
     ($type_name:ty, $parser_name:ident) => {
         impl Parse for $type_name {

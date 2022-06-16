@@ -3,55 +3,6 @@ use crate::parsers_span::*;
 use crate::syntax;
 use std::fs;
 
-#[test]
-
-fn single_line_if() {
-    let a: &str = // ... 
-"void norm(vec3 po) {
-  if (r.x > d.x)  { 
-    r = d;
-    t =3;
-  }
-}";
-
-    //     let b = // ...
-    // "norm(po: vec3<f32>)  {
-    // 	if (r.x > d.x) {
-    // 		r = d;
-    // 		t = 3;
-    // 	}
-    // } \n\n";
-
-    // let ret = do_parse(two_lines_if.to_string());
-    println!("{}", &do_parse(a.to_string()));
-    //     assert_eq!(&do_parse(a.to_string()), b);
-    //     fs::write("./foo.txt", &a).expect("Unable to write file");
-}
-
-#[test]
-fn two_lines_if() {
-    let a: &str = // ... 
-"void norm(vec3 po) {
-  if (r.x > d.x)  { 
-    r = d;
-    t =3;
-  }
-} ";
-
-    let b = // ...
-"norm(po: vec3<f32>)  {
-	if (r.x > d.x) {
-		r = d;
-		t = 3;
-	}
-} \n\n";
-
-    // let ret = do_parse(two_lines_if.to_string());
-    println!("{}", &do_parse(a.to_string()));
-    assert_eq!(&do_parse(a.to_string()), b);
-    fs::write("./foo.txt", &a).expect("Unable to write file");
-}
-
 // fn parse_uniline_comment() {
 
 // assert_eq!(
