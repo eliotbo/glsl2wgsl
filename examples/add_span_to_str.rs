@@ -36,11 +36,14 @@ const ADD_SPAN: &str = "
 
 // TODO: fix the newline for statements
 // THEN: big clean
+use glsl2wgsl::parsers_span::*;
 
 fn main() {
     // let mut replaced_quotes: String;
 
     let tests = fs::read_to_string("src/parse_tests.rs").expect("couldn't");
+
+    println!("HEREREREREE: {:?}", comment(Span::new("// lol")));
 
     // let (rest, (is_real, first_quote)) = find_one_quote(&ADD_SPAN).unwrap();
     // println!("{:?}", is_real);
@@ -52,7 +55,7 @@ fn main() {
 
     let (rest, replaced_quotes) = replace_all_quote_pairs(&tests).unwrap();
 
-    fs::write("./parse_span_texts.txt", &replaced_quotes).expect("Unable to write file");
+    // fs::write("./parse_span_texts.txt", &replaced_quotes).expect("Unable to write file");
 }
 
 fn replace_all_quote_pairs(i: &str) -> ParserResult<String> {

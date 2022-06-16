@@ -613,3 +613,78 @@ TranslationUnit(
                             Equal, 
                             Variable(Identifier("d"))
             ))))) }))] } })]))
+
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Void, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("norm"), 
+                    parameters: [
+                        Named(None, FunctionParameterDeclarator { 
+                            ty: TypeSpecifier { 
+                                ty: Vec3, 
+                                array_specifier: None 
+                            }, 
+                            ident: ArrayedIdentifier { 
+                                ident: Identifier("po"), 
+                                array_spec: None } })] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [Simple(Selection(SelectionStatement { 
+                        cond: Binary(GT, 
+                        Dot(
+                            Variable(Identifier("r")), 
+                            Identifier("x")), 
+                        Dot(Variable(Identifier("d")), Identifier("x"))
+                        ), 
+                        rest: Statement(Compound(
+                            CompoundStatement { 
+                                statement_list: [
+                                    Simple(
+                                        Expression(
+                                            Some(
+                                                Assignment(
+                                                    Variable(Identifier("r")), 
+                                                    Equal, 
+                                                    Variable(Identifier("d")))))
+                                    ), 
+                                    Simple(Expression(Some(Assignment(Variable(Identifier("t")), Equal, IntConst(3)))))] })) }))] } })]))
+
+
+TranslationUnit(NonEmpty([
+FunctionDefinition(
+    FunctionDefinition { 
+        prototype: FunctionPrototype { 
+            ty: FullySpecifiedType { 
+                qualifier: None, 
+                ty: TypeSpecifier { 
+                    ty: Void, 
+                    array_specifier: None } 
+            }, 
+            name: Identifier("main"), 
+            parameters: [] 
+        }, 
+        statement: CompoundStatement { 
+            statement_list: [Simple(Declaration(InitDeclaratorList(InitDeclaratorList { 
+                head: SingleDeclaration { 
+                    ty: FullySpecifiedType {
+                         qualifier: None, 
+                         ty: TypeSpecifier { 
+                             ty: Float, 
+                             array_specifier: None } 
+                    }, 
+                    name: Some(Identifier("a")), 
+                    array_specifier: None, 
+                    initializer: Some(Simple(FunCall(Identifier(Identifier("texelFetch")),
+                         [
+                            Variable(Identifier("ch0")), 
+                            FunCall(Identifier(Identifier("Bi")), 
+                                [Variable(Identifier("q"))]), 
+                            Variable(Identifier("ch0"))]))) }, tail: [] })))] } })]))

@@ -1,9 +1,72 @@
-let t: f32 = 1.;
-main()  {
-	let atj: f32 = 4.;
-	var atjxy = atj.xy;
-	atjxy = 5;
-	atj.x = atjxy.x;
-	atj.y = atjxy.y;
+var e: vec2<f32> = vec2<f32>(3.);
+let b: f32 = 1.;
+norm(po: vec3<f32>) -> vec3<f32> {
 } 
 
+norm2(wq: vec2<f32>) -> vec2<f32> {
+} 
+
+norm(po: vec3<f32>) -> vec3<f32> {
+	let what: i32 = 3;
+	var a: i32 = 2;
+	return what;
+} 
+
+var rd: vec4<f32> = vec4<f32>(0.);
+norm(po: vec3<f32>)  {
+	rd.x = rd.x * (2. + 3.);
+} 
+
+var rd: vec4<f32> = vec4<f32>(0.);
+norm(po: vec3<f32>)  {
+	rd.x = rd.x * (2. + 3.);
+} 
+
+main()  {
+
+	for (var i: i32 = 0; i < 120; i = i + 1) {
+		a = 3;
+	}
+
+} 
+
+norm(po: vec3<f32>)  {
+	var r: f32 = 2.;
+	let e: f32 = 1.;
+} 
+
+norm(po: vec3<f32>)  {
+	if (r.x > d.x) { r = d; }
+} 
+
+norm(po: vec3<f32>)  {
+	if (r.x > d.x) {
+		r = d;
+	} else { 
+
+		r = 1.;
+		a = 55;
+	}
+	col = col + (gl);
+} 
+
+[[stage(compute), workgroup_size(8, 8, 1)]]
+update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
+    let R: vec2<f32> = uni.iResolution.xy;
+    let y_inverted_location = vec2<i32>(i32(invocation_id.x), i32(R.y) - i32(invocation_id.y));
+    let location = vec2<i32>(i32(invocation_id.x), i32(invocation_id.y));
+    
+	var fragColor: vec4<f32>;
+	var fragCoord = vec2<f32>(f32(location.x), f32(location.y) );
+
+} 
+
+struct Light {
+	intensity: f32;
+	position: vec3<f32>;
+};
+
+[[group(?), binding(?)]]
+var<uniform> myLights: Light;
+const yaa: array<f32,1> = array<f32,1>(5.5);
+const yaa: array<f32,2> = array<f32,2>(5.5, 8.7);

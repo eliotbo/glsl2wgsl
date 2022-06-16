@@ -4,9 +4,10 @@ use wasm_bindgen::prelude::*;
 
 pub mod let2var;
 
-#[cfg(test)]
-mod parse_tests;
 pub mod parser;
+#[cfg(test)]
+// mod parse_tests;
+mod wgsl_convert_test;
 // pub mod parsers;
 pub mod parsers_span;
 
@@ -44,7 +45,7 @@ pub fn greet(_v: &str) {}
 pub fn do_parse(x: String) -> String {
     if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&x) {
         let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines_func));
-        println!("{:?}", trans);
+        // println!("{:?}", trans);
         match trans {
             Err(err) => {
                 let span = err.span();
