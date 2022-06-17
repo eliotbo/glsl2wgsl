@@ -6,7 +6,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::{anychar, char, multispace0, one_of};
 use nom::combinator::{eof, map, peek};
 use nom::multi::{many0, many_till, separated_list0};
-use nom::sequence::{delimited, preceded};
+use nom::sequence::{delimited, pair, preceded};
 use nom::Parser;
 
 pub use crate::nom_helpers::*;
@@ -77,9 +77,9 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
     let (rest, parsed_func_def) = map(
         many_till(
             anychar,
-            preceded(tag("fn "), identifier).and(function_call_args_anychar2),
+            pair(tag("fn "), identifier).and(function_call_args_anychar2),
         ),
-        |(before_func, (func_name, args))| {
+        |(before_func, ((fn_tag, func_name), args)): (Vec<char>, ((&str, &str), Vec<String>))| {
             //
             let args_joined = args
                 .iter()
@@ -99,7 +99,7 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
                 })
                 .collect::<Vec<String>>()
                 .join(", ");
-            before_func.iter().collect::<String>() + &func_name + "(" + &args_joined + ")"
+            before_func.iter().collect::<String>() + fn_tag + &func_name + "(" + &args_joined + ")"
         },
     )(i)?;
 

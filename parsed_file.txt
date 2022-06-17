@@ -1,27 +1,4 @@
-main()  {
-	var c: f32 = 0.;
-	if (value < 0) {
-		value = -value;
-		if (minDigits < 1) {		minDigits = 1;
-		} else { 
-		minDigits = minDigits - 1;
-		}
-		c = c + (char(45));
-		tp.x = tp.x - (FONT_SPACE);
-;
-	}
-
-	for (var ni: i32 = 0; ni < 10; ni = ni + 1) {
-		fn = fn / (10);
-		if (fn == 0) {		break;
- }
-		digits = digits + 1;
-	}
-
-} 
-
-f()  {
-	let aaa: f32 = bcbx;
-	let cxvb: f32 = 1.;
+fn norm(po: vec3<f32>)  {
+	if (r.x > d.x) { t = 3; }
 } 
 

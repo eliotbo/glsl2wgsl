@@ -386,7 +386,7 @@ pub fn argument1(i: &str) -> ParserResult<String> {
         rest = rest1;
         parsed_text += &text_so_far;
 
-        println!("scope: {:?}", scope);
+        // println!("scope: {:?}", scope);
         match paren_or_comma.as_str() {
             "(" => {
                 let (rest1, _single) = char('(')(rest)?;
@@ -426,7 +426,7 @@ pub fn argument1(i: &str) -> ParserResult<String> {
 
         // println!("parsed_text: {:?}", parsed_text);
     }
-    println!("parsed_text: {:?}", parsed_text);
+    // println!("parsed_text: {:?}", parsed_text);
 
     Ok((rest, parsed_text))
 }
@@ -450,7 +450,7 @@ pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
         ),
         |x: Vec<String>| {
             //
-            println!("HERE : {:?} -> ", x);
+
             x
         },
     )(i)

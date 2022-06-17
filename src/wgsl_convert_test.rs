@@ -4,18 +4,13 @@ use crate::do_parse;
 fn single_line_if() {
     let a: &str = // ... 
 "void norm(vec3 po) {
-  if (r.x > d.x)  { 
-    r = d;
-    t =3;
-  }
+  if (r.x > d.x)   t =3;
+  
 }";
 
     let b = // ...
-"norm(po: vec3<f32>)  {
-	if (r.x > d.x) {
-		r = d;
-		t = 3;
-	}
+"fn norm(po: vec3<f32>)  {
+	if (r.x > d.x) { t = 3; }
 } 
 
 ";
@@ -34,7 +29,7 @@ fn two_lines_if() {
 } ";
 
     let b = // ...
-"norm(po: vec3<f32>)  {
+"fn norm(po: vec3<f32>)  {
 	if (r.x > d.x) {
 		r = d;
 		t = 3;
@@ -78,10 +73,10 @@ vec2 norm2(vec2 wq) {}
 ";
 
     let b = // ...
-"norm(po: vec3<f32>) -> vec3<f32> {
+"fn norm(po: vec3<f32>) -> vec3<f32> {
 } 
 
-norm2(wq: vec2<f32>) -> vec2<f32> {
+fn norm2(wq: vec2<f32>) -> vec2<f32> {
 } 
 
 ";
@@ -98,7 +93,7 @@ fn func_proto_content() {
 }";
 
     let b = // ...
-"norm(po: vec3<f32>) -> vec3<f32> {
+"fn norm(po: vec3<f32>) -> vec3<f32> {
 	let what: i32 = 3;
 	let a: i32 = 2;
 	return what;
@@ -118,7 +113,7 @@ void norm(vec3 po) {
 
     let b = // ...
 "var rd: vec4<f32> = vec4<f32>(0.);
-norm(po: vec3<f32>)  {
+fn norm(po: vec3<f32>)  {
 	rd.x = rd.x * (2. + 3.);
 } 
 
@@ -131,7 +126,7 @@ norm(po: vec3<f32>)  {
 fn for_loop() {
     const FOR_LOOP: &str = "void main() { for(int i = 0; i < 120; i++) { a = 3; } }";
     let b = // ...
-"main()  {
+"fn main()  {
 
 	for (var i: i32 = 0; i < 120; i = i + 1) {
 		a = 3;
@@ -151,7 +146,7 @@ fn array_decl() {
 }";
 
     let b = // ...
-"norm(po: vec3<f32>)  {
+"fn norm(po: vec3<f32>)  {
 	let r: f32 = 2.;
 	let e: f32 = 1.;
 } 
@@ -175,7 +170,7 @@ fn if_else() {
 }";
 
     let b = // ...
-"norm(po: vec3<f32>)  {
+"fn norm(po: vec3<f32>)  {
 	if (r.x > d.x) {
 		r = d;
 	} else { 
@@ -196,7 +191,7 @@ fn inout() {
 {}";
 
     let b = // ...
-"func(fragColor: vec4<f32>, fragCoord: vec2<f32>)  {
+"fn func(fragColor: vec4<f32>, fragCoord: vec2<f32>)  {
 } 
 
 ";
@@ -239,10 +234,10 @@ void main() {}
 ";
 
     let b = // ...
-"main()  {
+"fn main()  {
 } 
 
-main()  {
+fn main()  {
 } 
 
 ";
@@ -264,7 +259,7 @@ void main() {
 }";
 
     let b = // ...
-"main()  {
+"fn main()  {
 	if (w) {
 		if (w) {
 			return true;
@@ -292,7 +287,7 @@ float func(float x) {
 ";
 
     let b = // ...
-"func(x: f32) -> f32 {
+"fn func(x: f32) -> f32 {
 	q = 10.;
 } 
 
@@ -311,7 +306,7 @@ void main() {
   blah.rg += 2;
 }";
     let b = // ...
-"main()  {
+"fn main()  {
 	var qxy = q.xy;
 	qxy = vec2<f32>(-1., 3.);
 	q.x = qxy.x;
@@ -337,7 +332,7 @@ void main() {
 ";
 
     let b = // ...
-"main()  {
+"fn main()  {
 	let q: vec2<f32> = vec2<f32>(-1., 3.);
 } 
 
@@ -355,7 +350,7 @@ void main() {
 }
 ";
     let b = // ...
-"main()  {
+"fn main()  {
 	let q: f32; if (w) { q = 1; } else { q = 4; };
 } 
 
@@ -367,7 +362,7 @@ void main() {
 #[test]
 fn for_convert_to_float() {
     const FOR_CONVERT_TO_FLOAT: &str = "
-void mainImage(  )
+void main(  )
 {    
     for(float i = 1; i < 2; i = i + 1)
     {
@@ -377,7 +372,7 @@ void mainImage(  )
 ";
 
     let b = // ...
-"mainImage()  {
+"fn main()  {
 
 	for (var i: f32 = 1.; i < 2.; i = i + 1.) {
 	}
@@ -397,7 +392,7 @@ void func( out vec4 U, in vec2 pos )
 { a= 5;}";
 
     let b = // ...
-"func(U: vec4<f32>, pos: vec2<f32>)  {
+"fn func(U: vec4<f32>, pos: vec2<f32>)  {
 	a = 5;
 } 
 
@@ -420,7 +415,7 @@ void main() {
 ";
 
     let b = // ...
-"main()  {
+"fn main()  {
 	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(12(a))));
 	textureLoad(BUFFER_ch4(i), vec2<i32>(Bi(st(a))));
 	gold = bobbyFisher(15, GR);
@@ -445,7 +440,7 @@ void Simulation()
 ";
 
     let b = // ...
-"Simulation()  {
+"fn Simulation()  {
 
 	for (var i: i32 = -2; i <= 2; i = i + 1) {
 	for (var j: i32 = -2; j <= 2; j = j + 1) {
@@ -478,12 +473,12 @@ float func2(float c, inout vec4 wert, inout float a)
 }";
 
     let b = // ...
-"func(a: f32, P: ptr<function, vec4<f32>>)  {
+"fn func(a: f32, P: ptr<function, vec4<f32>>)  {
 	(*P).x = (*P).x + (1.);
 	let a2: f32 = (*P).w;
 } 
 
-func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
+fn func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
 	(*wert) = 56;
 	(*a) = vec2<f32>(1., 1.);
 	c = 23;
@@ -504,7 +499,7 @@ void main() {
 ";
 
     let b = // ...
-"main()  {
+"fn main()  {
 	var wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q));
 	let wqe: vec4<f32> = textureLoad_CONVERT_TO_i32(BUFFER_ch0, vec2<i32>(q / R));
 } 
@@ -527,7 +522,7 @@ q2 = 4;
 
     let b = // ...
 "var<private> q2: f32;
-main()  {
+fn main()  {
 	p = 12;
 	q2 = 4;
 } 
@@ -549,7 +544,7 @@ void main() {
 
     let b = // ...
 "let t: f32 = 1.;
-main()  {
+fn main()  {
 	let atj: f32 = 4.;
 	var atjxy = atj.xy;
 	atjxy = 5;
@@ -560,4 +555,34 @@ main()  {
 ";
 
     assert_eq!(&do_parse(VAR_DOT.to_string()), b);
+}
+
+#[test]
+fn define_func_comma() {
+    const DEFINE_FUNC_COMMA: &str = "
+#define _sub   S(45);  
+#define S(a) c+=char(a);  tp.x-=FONT_SPACE;
+
+void main() {
+    float c = 0.;
+}
+
+void f() {
+  float aaa = bcbx, cxvb = 1;
+}
+";
+
+    let b = // ...
+"fn main()  {
+	let c: f32 = 0.;
+} 
+
+fn f()  {
+	let aaa: f32 = bcbx;
+	let cxvb: f32 = 1.;
+} 
+
+";
+
+    assert_eq!(&do_parse(DEFINE_FUNC_COMMA.to_string()), b);
 }

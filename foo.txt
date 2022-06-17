@@ -1,25 +1,4 @@
-
-#define _sub   c+=char(45);  tp.x-=FONT_SPACE;;  
-
-
-void main() {
+void norm(vec3 po) {
+  if (r.x > d.x)   t =3;
   
-    float c = 0.;
-  if (value < 0) 
-  { value = -value;
-    if (minDigits < 1) minDigits = 1;
-    else minDigits--;
-    _sub                   // add minus char
-  } 
-  
-  for (int ni=0; ni<10; ni++)
-  {
-    fn /= 10;
-    if (fn == 0) break;
-    digits++;
-  } 
-}
-
-void f() {
-  float aaa = bcbx, cxvb = 1;
 }

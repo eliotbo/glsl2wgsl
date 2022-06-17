@@ -124,7 +124,7 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                     count(none_of(ALPHANUM_UNDER), 1),
                     verify(anychar_underscore, |x: &str| {
                         //
-                        println!("xxx : {:?} -> {:?} ", x, def.name);
+
                         x.to_string() == def.name
                     }),
                 ),
@@ -142,7 +142,7 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                 let mut so_far = so_far_chars.iter().collect::<String>();
                 so_far += &single_char.iter().collect::<String>();
 
-                println!("lines : {:?} --> {:?} --> {:?}", so_far, _name, args);
+                // println!("lines : {:?} --> {:?} --> {:?}", so_far, _name, args);
 
                 let mut replaced_expression = def.replace_by.to_string();
                 //
@@ -183,7 +183,7 @@ pub fn func_definition_parser(i: &str) -> ParserResult<String> {
 
     let (_, no_defines) = erase_all_func_defines(i)?;
 
-    println!("no_defines : {:?}", define_funcs);
+    // println!("no_defines : {:?}", define_funcs);
 
     if let Ok((_rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
         return success(so_far)("");
