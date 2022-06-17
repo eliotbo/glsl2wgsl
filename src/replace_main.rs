@@ -19,7 +19,7 @@ pub fn anychar_type(i: &str) -> ParserResult<String> {
     map(take_while1(identifier_type_pred), |v: &str| v.to_string())(i)
 }
 
-const UPDATE_INIT: &str = r"[[stage(compute), workgroup_size(8, 8, 1)]]
+const UPDATE_INIT: &str = "[[stage(compute), workgroup_size(8, 8, 1)]]
 fn update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
     let R: vec2<f32> = uni.iResolution.xy;
     let y_inverted_location = vec2<i32>(i32(invocation_id.x), i32(R.y) - i32(invocation_id.y));

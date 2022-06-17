@@ -43,7 +43,7 @@ fn main() {
 
     let tests = fs::read_to_string("src/parse_tests.rs").expect("couldn't");
 
-    println!("HEREREREREE: {:?}", comment(Span::new("// lol")));
+    // println!("HEREREREREE: {:?}", comment(Span::new("// lol")));
 
     // let (rest, (is_real, first_quote)) = find_one_quote(&ADD_SPAN).unwrap();
     // println!("{:?}", is_real);

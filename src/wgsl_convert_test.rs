@@ -283,19 +283,17 @@ void main() {
 #[test]
 fn define() {
     const DEFINE: &str = "
-#define texel(a, p) texelFetch(a, Bi(p), 0)
-#define blah 3.4
+#define in_body 10.0
+#define no_in_body 3.4
 
-float hein(float x) {
-  q = texel(tt, bb);
+float func(float x) {
+  q = in_body;
 }
 ";
 
     let b = // ...
-"var<private> blah = 3.4;
-
-hein(x: f32) -> f32 {
-	q = textureLoad(BUFFER_tt, vec2<i32>(Bi(bb)));
+"func(x: f32) -> f32 {
+	q = 10.;
 } 
 
 ";
@@ -411,7 +409,7 @@ void func( out vec4 U, in vec2 pos )
 #[test]
 fn define_func() {
     const DEFINES_FUNC: &str = "
-#define texel(ax, p) elFechax(ax, Bi(p), ax)
+#define texel(ax, p) texelFetch(ax(i), Bi(p(a)), ax(i))
 #define q 12
 #define t(pk, l) bobbyFisher(15, pk)
 void main() {
@@ -422,12 +420,10 @@ void main() {
 ";
 
     let b = // ...
-"var<private> q = 12;
-
-main()  {
-	elFechax(ch0, Bi(q), ch0);
-	elFechax(ch4, Bi(st), ch4);
-	gold = t(GR, big);
+"main()  {
+	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(12(a))));
+	textureLoad(BUFFER_ch4(i), vec2<i32>(Bi(st(a))));
+	gold = bobbyFisher(15, GR);
 } 
 
 ";
@@ -510,7 +506,7 @@ void main() {
     let b = // ...
 "main()  {
 	var wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q));
-	let wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q / R  /* 0 to 1 range -> CONVERT TO I32 */  ));
+	let wqe: vec4<f32> = textureLoad_CONVERT_TO_i32(BUFFER_ch0, vec2<i32>(q / R));
 } 
 
 ";
@@ -521,21 +517,19 @@ void main() {
 #[test]
 fn let_vs_varprivate() {
     const LET_VS_VARPRIVATE: &str = "
-float q;
 #define q 12
-float q = 1;
+float q2;
 void main() {
-
-// q = 4;
+p = q;
+q2 = 4;
   }
 ";
 
     let b = // ...
-"var<private> q: f32;
-var<private> q = 12;
-
-let q: f32 = 1.;
+"var<private> q2: f32;
 main()  {
+	p = 12;
+	q2 = 4;
 } 
 
 ";

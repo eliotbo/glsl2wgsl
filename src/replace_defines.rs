@@ -79,7 +79,7 @@ pub fn erase_all_defines(i: &str) -> ParserResult<String> {
 
 pub fn definition_parser(i: &str) -> ParserResult<String> {
     let (_rest, hash_defines_info) = many0(find_define_tag)(i)?;
-    println!("{:?}", hash_defines_info);
+    // println!("{:?}", hash_defines_info);
 
     let (_, no_defines) = erase_all_defines(i)?;
 

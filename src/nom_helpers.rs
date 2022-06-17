@@ -405,7 +405,13 @@ pub fn argument1(i: &str) -> ParserResult<String> {
             }
         }
 
+        // for any non-breaking char, parse it so we can get to the next ")", "(", or ","
+        // let (rest1, _char) = anychar(rest)?;
+        // rest = rest1;
+
         parsed_text += &paren_or_comma;
+
+        // println!("parsed_text: {:?}", parsed_text);
     }
 
     Ok((rest, parsed_text))
@@ -413,11 +419,27 @@ pub fn argument1(i: &str) -> ParserResult<String> {
 
 pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
     map(
-        preceded(
-            tag("("),
-            many0(delimited(multispace0, argument1, multispace0)),
-        ),
-        |x: Vec<String>| x,
+        // preceded(
+        //     tag("("),
+        //     many0(delimited(multispace0, argument1,multispace0 )),
+        // ),
+        preceded(tag("("), many0(preceded(multispace0, argument1))),
+        //
+        // delimited(
+        //     tag("("),
+        //     many0(delimited(multispace0, argument1, multispace0)),
+        //     tag(")"),
+        // ),
+        // delimited(
+        //     tag("("),
+        //     separated_list0(tag(","), delimited(multispace0, argument1, multispace0)),
+        //     tag(")"),
+        // ),
+        |x: Vec<String>| {
+            //
+            // println!("x: {:?}", x);
+            x
+        },
     )(i)
 }
 
@@ -431,7 +453,10 @@ pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
             ),
             tag(")"),
         ),
-        |x| x,
+        |x| {
+            // println!("x: {:?}", x);
+            x
+        },
     )(i)
 }
 

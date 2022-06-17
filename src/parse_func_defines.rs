@@ -3,11 +3,11 @@
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::{anychar, multispace0, space1};
+use nom::character::complete::{anychar, multispace0, none_of, space1};
 use nom::combinator::{eof, map, success, verify};
 use nom::error::VerboseError;
-use nom::multi::{many0, many_till};
-use nom::sequence::preceded;
+use nom::multi::{count, many0, many_till};
+use nom::sequence::{pair, preceded};
 
 use nom::IResult;
 use nom::Parser;
@@ -27,7 +27,10 @@ pub fn erase_one_define(i: &str) -> ParserResult<String> {
                 many_till(anychar, tag("\n")),
             ),
         ),
-        |x| x.0.iter().collect(),
+        |x| {
+            // println!("x: {:?}", x.0.iter().collect::<String>());
+            x.0.iter().collect()
+        },
     )(i)
 }
 
@@ -45,7 +48,10 @@ pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
 pub fn replace_define_tag(i: &str) -> ParserResult<(String, Vec<String>)> {
     map(
         preceded(tag("#define").and(space1), anychar_underscore).and(function_call_args),
-        |x| x,
+        |x| {
+            // println!("x: {:?}", x);
+            x
+        },
     )(i)
 }
 
@@ -64,13 +70,15 @@ pub fn get_name_and_args(i: &str) -> ParserResult<(String, Vec<String>)> {
 }
 
 // TODO: right now, the end of a defined function is detected with a newline char.
-// Perhaps make more robust... not sure how
+// Perhaps make more robust...
 pub fn get_assignment(i: &str) -> ParserResult<String> {
     map(preceded(multispace0, many_till(anychar, tag("\n"))), |x| {
         x.0.iter().collect()
     })(i)
 }
 
+// parsing of a #define function
+// e.g. #define texel(buffer, position) texelFetch(buffer, position, 0)
 pub fn construct_assignment_vars(i: &str) -> ParserResult<DefineFunc> {
     let (rest, (name, args)) = get_name_and_args(i)?;
     let (rest, mut assignment) = get_assignment(rest)?;
@@ -103,23 +111,42 @@ pub fn detect_identifier_as_arg(i: &str, name: String) -> ParserResult<String> {
     verify(anychar_underscore, |x: &str| x.to_string() == name)(i)
 }
 
+// finds an instance of the #define function in the code body and replaces it
+// by its definition using the parsed arguments
 pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserResult<String> {
     map(
         many0(
             many_till(
                 anychar,
-                verify(anychar_underscore, |x: &str| x.to_string() == def.name),
+                pair(
+                    // the character before the name of the function should not be
+                    // part of the name
+                    count(none_of(ALPHANUM_UNDER), 1),
+                    verify(anychar_underscore, |x: &str| {
+                        //
+
+                        x.to_string() == def.name
+                    }),
+                ),
             )
             .and(function_call_args_anychar),
         )
         .and(rest_of_script),
         |(lines, rest)| {
             let mut all_script = "".to_string();
-            for ((so_far_chars, _), args) in lines.iter() {
-                let mut so_far = so_far_chars.iter().collect::<String>();
-                let mut replaced_expression = def.replace_by.to_string();
+            //
 
+            // for each instance of the #define function in the code body
+            for ((so_far_chars, (single_char, _)), args) in lines.iter() {
+                //
+                let mut so_far = so_far_chars.iter().collect::<String>();
+                so_far += &single_char.iter().collect::<String>();
+
+                let mut replaced_expression = def.replace_by.to_string();
+                //
+                // replace the placeholder argument by the ones provided in the code body
                 for (n, arg) in args.iter().enumerate() {
+                    //
                     let num_str = "#arg_".to_string() + &n.to_string();
                     if let Ok((_, assignment)) =
                         search_and_replace(&replaced_expression, num_str.clone(), arg.to_string())
@@ -139,6 +166,7 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
 
 pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserResult<String> {
     let mut full_script = i.to_string();
+
     for def in defs.iter() {
         if let Ok((_, fs)) = find_and_replace_single_define_func(&full_script, def.clone()) {
             full_script = fs;

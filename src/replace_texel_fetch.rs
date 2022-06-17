@@ -38,11 +38,10 @@ pub fn check_one_texture(i: &str) -> ParserResult<String> {
         |(before_texel_fetch, args)| {
             let mut ret = before_texel_fetch.iter().collect::<String>();
 
-            ret = ret + "textureLoad(" + "BUFFER_" + args[0].as_str() + ", ";
-            ret = ret
-                + "vec2<i32>("
-                + args[1].as_str()
-                + "  /* 0 to 1 range -> CONVERT TO I32 */  ))";
+            println!("args: {:?}", args);
+
+            ret = ret + "textureLoad_CONVERT_TO_i32(" + "BUFFER_" + args[0].as_str() + ", ";
+            ret = ret + "vec2<i32>(" + args[1].as_str() + "))";
 
             ret
         },

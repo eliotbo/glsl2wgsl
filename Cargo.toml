@@ -35,3 +35,7 @@ path = "examples/ex.rs"
 [[example]]
 name = "add_span_to_str"
 path = "examples/add_span_to_str.rs"
+
+[[example]]
+name = "parse_file"
+path = "examples/parse_file.rs"
