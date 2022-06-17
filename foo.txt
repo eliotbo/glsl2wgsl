@@ -1,5 +1,25 @@
-main()  {
-	var wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q));
-	let wqe: vec4<f32> = textureLoad_CONVERT_TO_i32(BUFFER_ch0, vec2<i32>(q / R));
-} 
 
+#define _sub   c+=char(45);  tp.x-=FONT_SPACE;;  
+
+
+void main() {
+  
+    float c = 0.;
+  if (value < 0) 
+  { value = -value;
+    if (minDigits < 1) minDigits = 1;
+    else minDigits--;
+    _sub                   // add minus char
+  } 
+  
+  for (int ni=0; ni<10; ni++)
+  {
+    fn /= 10;
+    if (fn == 0) break;
+    digits++;
+  } 
+}
+
+void f() {
+  float aaa = bcbx, cxvb = 1;
+}

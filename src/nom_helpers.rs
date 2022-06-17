@@ -366,7 +366,7 @@ pub fn search_and_replace(i: &str, v: String, num: String) -> ParserResult<Strin
 
 pub fn till_next_paren_or_comma(i: &str) -> ParserResult<(String, String)> {
     map(
-        many_till(anychar, alt((tag("("), tag(")"), tag(",")))),
+        many_till(anychar, peek(alt((tag("("), tag(")"), tag(","))))),
         |(so_far, brack): (Vec<char>, &str)| {
             //
             let text = so_far.iter().collect::<String>();
@@ -386,21 +386,36 @@ pub fn argument1(i: &str) -> ParserResult<String> {
         rest = rest1;
         parsed_text += &text_so_far;
 
+        println!("scope: {:?}", scope);
         match paren_or_comma.as_str() {
-            "(" => scope += 1,
+            "(" => {
+                let (rest1, _single) = char('(')(rest)?;
+                rest = rest1;
+                scope += 1;
+                parsed_text += &paren_or_comma;
+            }
             ")" => {
                 scope -= 1;
 
                 // end of function call
                 if scope == -1 {
                     break;
+                } else {
+                    let (rest1, _single) = char(')')(rest)?;
+                    rest = rest1;
+                    parsed_text += &paren_or_comma;
                 }
             }
             _ => {
                 // case of a comma
                 // end of argument
+
                 if scope == 0 {
                     break;
+                } else {
+                    let (rest1, _single) = char(',')(rest)?;
+                    rest = rest1;
+                    parsed_text += &paren_or_comma;
                 }
             }
         }
@@ -409,10 +424,9 @@ pub fn argument1(i: &str) -> ParserResult<String> {
         // let (rest1, _char) = anychar(rest)?;
         // rest = rest1;
 
-        parsed_text += &paren_or_comma;
-
         // println!("parsed_text: {:?}", parsed_text);
     }
+    println!("parsed_text: {:?}", parsed_text);
 
     Ok((rest, parsed_text))
 }
@@ -421,23 +435,22 @@ pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
     map(
         // preceded(
         //     tag("("),
-        //     many0(delimited(multispace0, argument1,multispace0 )),
+        //     many0(delimited(multispace0, argument1, multispace0)),
         // ),
-        preceded(tag("("), many0(preceded(multispace0, argument1))),
-        //
+        // preceded(tag("("), many0(preceded(multispace0, argument1))),
         // delimited(
         //     tag("("),
         //     many0(delimited(multispace0, argument1, multispace0)),
         //     tag(")"),
         // ),
-        // delimited(
-        //     tag("("),
-        //     separated_list0(tag(","), delimited(multispace0, argument1, multispace0)),
-        //     tag(")"),
-        // ),
+        delimited(
+            tag("("),
+            separated_list0(tag(","), delimited(multispace0, argument1, multispace0)),
+            tag(")"),
+        ),
         |x: Vec<String>| {
             //
-            // println!("x: {:?}", x);
+            println!("HERE : {:?} -> ", x);
             x
         },
     )(i)
