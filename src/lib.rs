@@ -23,6 +23,7 @@ pub mod parsers_span;
 pub mod syntax;
 pub mod transpiler;
 
+pub mod insert_new_arg_vars;
 pub mod nom_helpers;
 pub mod parse_func_defines;
 pub mod replace_defines;
@@ -31,6 +32,7 @@ pub mod replace_main;
 pub mod replace_texel_fetch;
 pub mod replace_unis;
 
+use insert_new_arg_vars::add_var_to_reassigned_args;
 use parse_func_defines::*;
 use replace_defines::*;
 use replace_inouts::{replace_inouts, search_and_replace_void};
@@ -108,6 +110,13 @@ pub fn postprocessing(i: &str) -> String {
         buf = tex;
     } else {
         return "Encountered error while attempting to replace all \"texture(..)\" and \"texelFetch(..)\" functions"
+            .to_string();
+    }
+
+    if let Ok((_, tex)) = add_var_to_reassigned_args(&buf) {
+        buf = tex;
+    } else {
+        return "Encountered error while attempting to insert var to args that are reassigned"
             .to_string();
     }
 

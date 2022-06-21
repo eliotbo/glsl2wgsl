@@ -479,9 +479,10 @@ float func2(float c, inout vec4 wert, inout float a)
 } 
 
 fn func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
+	var c_var = c;
 	(*wert) = 56;
 	(*a) = vec2<f32>(1., 1.);
-	c = 23;
+	c_var = 23;
 } 
 
 ";
@@ -585,4 +586,26 @@ fn f()  {
 ";
 
     assert_eq!(&do_parse(DEFINE_FUNC_COMMA.to_string()), b);
+}
+
+#[test]
+fn reassigned_arg() {
+    const REASSIGNED_ARG: &str = "void func(vec2 fragColor, vec2 fragCoord)
+{
+    fragCoord = vec2(0.);
+    fragColor = vec2(1.0);
+}
+";
+
+    let b = // ...
+"fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)  {
+	var fragCoord_var = fragCoord;
+	var fragColor_var = fragColor;
+	fragCoord_var = vec2<f32>(0.);
+	fragColor_var = vec2<f32>(1.);
+} 
+
+";
+
+    assert_eq!(&do_parse(REASSIGNED_ARG.to_string()), b);
 }

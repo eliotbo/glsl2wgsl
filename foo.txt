@@ -1,4 +1,4 @@
-void norm(vec3 po) {
-  if (r.x > d.x)   t =3;
-  
+fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)
+{
+    fragCoord = vec2<f32>(0.);
 }
