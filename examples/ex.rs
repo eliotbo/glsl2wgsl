@@ -61,17 +61,12 @@ void main() {
 ";
 
 const MAT3: &str = "
-void dum() {
-    mat3 m;
-    m[0] = vec3(1.0);
-}
+ float d, h = 0;
 ";
 // TODO: fix the newline for statements
 
 // 2: delete all commented lines before going into the define_func
 // 3: take all lines into account when reporting the line number in errors
-
-// 7. float d, h = 0.0;
 
 fn main() {
     // //
@@ -105,7 +100,7 @@ fn main() {
     // // // println!("replaced_defines: {:?}", replaced_defines);
 
     // // To print the abstract syntax tree, uncomment the following line
-    // let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
+    let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
 
     // let buf = do_parse(LET2VAR_SHORT.to_string());
     let buf = do_parse(MAT3.to_string());
@@ -114,6 +109,6 @@ fn main() {
 
     fs::write("./parsed_file.txt", &buf).expect("Unable to write file");
 
-    // println!("{:?}", trans);
+    println!("{:?}", trans);
     // println!("{:?}", buf);
 }

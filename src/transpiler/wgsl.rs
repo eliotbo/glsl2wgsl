@@ -1522,16 +1522,34 @@ pub fn show_init_declarator_list<F>(f: &mut F, i: &syntax::InitDeclaratorList, i
 where
     F: Write,
 {
-    show_single_declaration(f, &i.head, ind);
+    let mut default_initializer = None;
+
+    if let Some(init) = i.head.initializer.clone() {
+        default_initializer = Some(init);
+    } else {
+        for decl in &i.tail {
+            if let Some(init) = decl.initializer.clone() {
+                default_initializer = Some(init);
+                break;
+            }
+        }
+    };
+
+    show_single_declaration(f, &i.head, default_initializer.clone(), ind);
 
     for decl in &i.tail {
         let _ = f.write_str(";\n");
-        show_single_declaration_no_type(f, decl, &i.head.ty, ind);
+        // show_single_declaration(f, decl, default_initializer, ind);
+        show_single_declaration_no_type(f, decl, &i.head.ty, default_initializer.clone(), ind);
     }
 }
 
-pub fn show_single_declaration<F>(f: &mut F, d: &syntax::SingleDeclaration, i: Indent)
-where
+pub fn show_single_declaration<F>(
+    f: &mut F,
+    d: &syntax::SingleDeclaration,
+    default_initializer: Option<syntax::Initializer>,
+    i: Indent,
+) where
     F: Write,
 {
     indent(f, i);
@@ -1591,6 +1609,9 @@ where
         if let Some(ref initializer) = d.initializer {
             let _ = f.write_str(" = ");
             show_initializer(f, initializer, ty);
+        } else if let Some(ref initializer) = default_initializer {
+            let _ = f.write_str(" = ");
+            show_initializer(f, initializer, ty);
         }
     } else {
         let _ = f.write_str("; ");
@@ -1620,6 +1641,7 @@ pub fn show_single_declaration_no_type<F>(
     f: &mut F,
     d: &syntax::SingleDeclarationNoType,
     t: &syntax::FullySpecifiedType,
+    default_initializer: Option<syntax::Initializer>,
     i: Indent,
 ) where
     F: Write,
@@ -1646,6 +1668,9 @@ pub fn show_single_declaration_no_type<F>(
     // let ty_is_float = is_float(ty);
 
     if let Some(ref initializer) = d.initializer {
+        let _ = f.write_str(" = ");
+        show_initializer(f, initializer, ty);
+    } else if let Some(ref initializer) = default_initializer {
         let _ = f.write_str(" = ");
         show_initializer(f, initializer, ty);
     }

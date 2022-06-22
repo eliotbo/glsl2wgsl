@@ -140,7 +140,7 @@ fn for_loop() {
 }
 
 #[test]
-fn array_decl() {
+fn array_decl1() {
     const ARRAYED_DECLARATION: &str = "void norm(vec3 po) {
   float r = 2.0, e = 1.0;
 }";
@@ -151,6 +151,30 @@ fn array_decl() {
 	let e: f32 = 1.;
 } 
 
+";
+
+    assert_eq!(&do_parse(ARRAYED_DECLARATION.to_string()), b);
+}
+
+#[test]
+fn array_decl2() {
+    const ARRAYED_DECLARATION: &str = " float d = 0.0, h;";
+
+    let b = // ...
+"let d: f32 = 0.;
+let h: f32 = 0.;
+";
+
+    assert_eq!(&do_parse(ARRAYED_DECLARATION.to_string()), b);
+}
+
+#[test]
+fn array_decl3() {
+    const ARRAYED_DECLARATION: &str = " float d, h = 0;";
+
+    let b = // ...
+"var<private> d: f32 = 0.;
+let h: f32 = 0.;
 ";
 
     assert_eq!(&do_parse(ARRAYED_DECLARATION.to_string()), b);

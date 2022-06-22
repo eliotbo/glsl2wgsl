@@ -717,3 +717,92 @@ TranslationUnit(
                                 array_specifier: None, 
                                 initializer: None }, 
                             tail: [] })))] } })]))
+
+ [Simple(
+    Declaration(
+        InitDeclaratorList(
+            InitDeclaratorList { 
+                head: SingleDeclaration { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Mat3, 
+                            array_specifier: None } 
+                    }, 
+                    name: Some(Identifier("m")), 
+                    array_specifier: None, 
+                    initializer: None 
+                }, 
+                tail: [] }))
+), 
+Simple(
+    Expression(
+        Some(
+            Assignment(
+                Bracket(
+                    Variable(
+                        Identifier("m")), 
+                        ArraySpecifier { 
+                            dimensions: NonEmpty([ExplicitlySized(IntConst(0))]) }
+                ), 
+                Equal, 
+                FunCall(Identifier(Identifier("vec3<f32>")), [FloatConst(1.0)])
+    ))))] } })]))
+
+[Simple(
+    Declaration(
+        InitDeclaratorList(
+            InitDeclaratorList {
+                 head: SingleDeclaration { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { ty: Float, array_specifier: None } 
+                    }, 
+                    name: Some(Identifier("yaa")), 
+                    array_specifier: Some(ArraySpecifier { dimensions: NonEmpty([ExplicitlySized(IntConst(2))]) }), 
+                    initializer: Some(Simple(FunCall(Expr(Bracket(Variable(Identifier("f32")),
+
+
+Declaration(
+    InitDeclaratorList(
+        InitDeclaratorList { 
+            head: SingleDeclaration { 
+                ty: FullySpecifiedType { 
+                    qualifier: None, 
+                    ty: TypeSpecifier { 
+                        ty: Float, 
+                        array_specifier: None } 
+                }, 
+                name: Some(Identifier("d")), 
+                array_specifier: None, 
+                initializer: None 
+            }, 
+            tail: [SingleDeclarationNoType { 
+                ident: ArrayedIdentifier { 
+                    ident: Identifier("h"), 
+                    array_spec: None 
+                }, 
+                initializer: Some(Simple(FloatConst(0.0))) }] }))])          
+
+InitDeclaratorList { 
+    head: SingleDeclaration { 
+        ty: FullySpecifiedType { 
+            qualifier: None, 
+            ty: TypeSpecifier { ty: Float, array_specifier: None } 
+        }, 
+        name: Some(Identifier("d")), 
+        array_specifier: None, 
+        initializer: None }, 
+    tail: [] })), 
+    
+TranslationUnit(NonEmpty([Declaration(
+    InitDeclaratorList(
+        InitDeclaratorList { 
+            head: SingleDeclaration { 
+                ty: FullySpecifiedType {
+                    qualifier: None, 
+                    ty: TypeSpecifier { ty: Float, array_specifier: None } 
+                }, 
+                name: Some(Identifier("h")), 
+                array_specifier: None, 
+                initializer: Some(Simple(FloatConst(0.0))) }, tail: [] }))]))
