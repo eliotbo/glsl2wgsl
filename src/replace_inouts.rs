@@ -47,9 +47,10 @@ pub fn search_and_replace_void(i: &str) -> ParserResult<String> {
 }
 
 pub fn check_inout_arg(i: &str) -> ParserResult<String> {
-    map(preceded(tag("inout "), anychar_underscore), |x| {
-        x.to_string()
-    })(i)
+    map(
+        preceded(alt((tag("inout "), tag("out "))), anychar_underscore),
+        |x| x.to_string(),
+    )(i)
 }
 
 // add type ptr<function, particle>
@@ -86,6 +87,14 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
                 .map(|maybe_inout| {
                     //
                     if let Some(no_inout) = maybe_inout.strip_prefix("inout ") {
+                        let stripped_inout = no_inout.to_string();
+
+                        if let Ok((_, added_ptr_type)) = add_ptr_to_arg(&stripped_inout) {
+                            added_ptr_type
+                        } else {
+                            "ERROR: could not parser TYPE of inout arg".to_string()
+                        }
+                    } else if let Some(no_inout) = maybe_inout.strip_prefix("out ") {
                         let stripped_inout = no_inout.to_string();
 
                         if let Ok((_, added_ptr_type)) = add_ptr_to_arg(&stripped_inout) {

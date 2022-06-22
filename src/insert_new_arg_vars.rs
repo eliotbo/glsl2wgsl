@@ -129,7 +129,7 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
         )),
         |(before_func, ((fn_tag, func_name), args)): (Vec<char>, ((&str, &str), Vec<String>))| {
             //
-            println!("args: {:?}", args);
+            // println!("args: {:?}", args);
 
             let args = args
                 .iter()
@@ -170,7 +170,7 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
 
     let (rest, mut body_removed_curly) = get_function_body(rest_removed_curly, 1)?;
 
-    println!("{}", body_removed_curly);
+    // println!("{}", body_removed_curly);
 
     for arg in args.iter() {
         // if the function body contains a reassigned for "arg" of the type "arg = ...",

@@ -688,3 +688,32 @@ FunctionDefinition(
                             FunCall(Identifier(Identifier("Bi")), 
                                 [Variable(Identifier("q"))]), 
                             Variable(Identifier("ch0"))]))) }, tail: [] })))] } })]))
+
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: Mat3, 
+                            array_specifier: None } 
+                    }, 
+                    name: Identifier("fromEuler"), 
+                    parameters: [] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [
+                        Simple(Declaration(InitDeclaratorList(InitDeclaratorList { 
+                            head: SingleDeclaration { 
+                                ty: FullySpecifiedType { 
+                                    qualifier: None, 
+                                    ty: TypeSpecifier { 
+                                        ty: Mat3, 
+                                        array_specifier: None } 
+                                }, 
+                                name: Some(Identifier("m")),
+                                array_specifier: None, 
+                                initializer: None }, 
+                            tail: [] })))] } })]))

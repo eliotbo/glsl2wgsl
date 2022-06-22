@@ -9,7 +9,7 @@ use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_while1};
 use nom::character::complete::{alpha1, alphanumeric1, anychar};
 use nom::combinator::{eof, map, opt, peek, recognize, success, verify};
-use nom::multi::{many0, many_till};
+use nom::multi::{count, many0, many_till};
 use nom::sequence::{pair, preceded};
 use nom::Parser;
 
@@ -29,6 +29,10 @@ fn identifier_str(i: &str) -> ParserResult<&str> {
 pub fn string(i: &str) -> ParserResult<String> {
     map(identifier_str, |x| String::from(x))(i)
 }
+
+// pub reassignment(i: &str) -> ParserResult<String> {
+//     alt((tag(" = "), ))
+// }
 
 pub fn read_type(i: &str) -> ParserResult<String> {
     map(tag(": ").and(till_space).and(tag(" = ")), |(x1, _x2)| {
@@ -68,14 +72,14 @@ pub fn till_space(i: &str) -> ParserResult<String> {
     })(i)
 }
 
-pub fn is_repeated<'a, 'b>(s: &'b str) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
-    move |i: &str| {
-        map(opt(peek(many_till(anychar, peek(tag(s))))), |x| match x {
-            Some(_) => true,
-            None => false,
-        })(i)
-    }
-}
+// pub fn is_repeated<'a, 'b>(s: &'b str) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
+//     move |i: &str| {
+//         map(opt(peek(many_till(anychar, peek(tag(s))))), |x| match x {
+//             Some(_) => true,
+//             None => false,
+//         })(i)
+//     }
+// }
 
 pub fn till_space_or_colon(i: &str) -> ParserResult<String> {
     map(
@@ -106,37 +110,69 @@ pub fn identifier(input: &str) -> ParserResult<&str> {
     )(input)
 }
 
-pub fn search_for_full_identifier<'a, 'b>(
+// pub fn search_identifier_assignment<'a, 'b>(
+//     s: &'b str,
+// ) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
+//     move |i: &str| {
+//         let (rest, x) = opt(many_till(
+//             anychar,
+//             verify(preceded(is_not(ALPHANUM_UNDER), identifier), |x: &str| {
+//                 x == s
+//             }),
+//         ))(i)?;
+
+//         println!("rest: {:?}", rest);
+//         println!("x: {:?}", x);
+//         if let Some((_, _name)) = x {
+//             let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
+//             let rest_of_line = rest_of_line.iter().collect::<String>();
+
+//             let y: ParserResult<Option<(Vec<char>, &str)>> =
+//                 opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
+
+//             if let Ok((_, Some(_))) = y {
+//                 println!("succ y: {:?} \n {:?}", y, rest2);
+//                 return success(true)(rest2);
+//             }
+//         }
+
+//         println!("FALSE x: {:?}", x);
+
+//         return success(false)(rest);
+//     }
+// }
+
+pub fn search_identifier_assignment<'a, 'b>(
     s: &'b str,
 ) -> impl FnMut(&'a str) -> ParserResult<bool> + 'b {
     move |i: &str| {
-        let x = opt(many_till(
+        let (rest, _) = many_till(
             anychar,
             verify(preceded(is_not(ALPHANUM_UNDER), identifier), |x: &str| {
                 x == s
             }),
-        ))(i)?;
+        )(i)?;
 
-        if let (rest, Some((_, _name))) = x {
-            let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
-            let rest_of_line = rest_of_line.iter().collect::<String>();
+        let (after_line, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
+        let rest_of_line = rest_of_line.iter().collect::<String>();
 
-            let y: ParserResult<Option<(Vec<char>, &str)>> =
-                opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
+        let y: ParserResult<Option<(Vec<char>, &str)>> =
+            opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
 
-            if let Ok((_, Some(_))) = y {
-                return success(true)(rest2);
-            }
+        if let Ok((_, Some(_))) = y {
+            return success(true)(after_line);
         }
 
-        return success(false)(i);
+        return success(false)(rest);
     }
 }
 
 pub fn decl_is_reassigned(i: &str) -> ParserResult<bool> {
     let (rest, name) = map(get_named_var, |x| x)(i)?;
 
-    let z: ParserResult<bool> = map(peek(search_for_full_identifier(&name)), |x| x)(rest);
+    let z: ParserResult<bool> = map(many0(search_identifier_assignment(&name)), |x| {
+        x.iter().any(|x| *x)
+    })(rest);
     return z;
 }
 

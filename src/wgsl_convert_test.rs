@@ -53,17 +53,17 @@ let b: f32 = 1.;
     assert_eq!(&do_parse(a.to_string()), b);
 }
 
-#[test]
-fn simple_const() {
-    let a: &str = // ... 
-"const vec2 e = vec2(.00035, -.00035);";
+// #[test]
+// fn simple_const() {
+//     let a: &str = // ...
+// "const vec2 e = vec2(.00035, -.00035);";
 
-    let b = // ...
-"const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);
-";
+//     let b = // ...
+// "const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);
+// ";
 
-    assert_eq!(&do_parse(a.to_string()), b);
-}
+//     assert_eq!(&do_parse(a.to_string()), b);
+// }
 
 #[test]
 fn func_proto() {
@@ -185,18 +185,33 @@ fn if_else() {
     assert_eq!(&do_parse(IF_ELSE.to_string()), b);
 }
 
+// #[test]
+// fn inout() {
+//     const IN_OUT: &str = "void func( out vec4 fragColor, in vec2 fragCoord )
+// {}";
+
+//     let b = // ...
+// "fn func(fragColor: vec4<f32>, fragCoord: vec2<f32>)  {
+// }
+
+// ";
+
+//     assert_eq!(&do_parse(IN_OUT.to_string()), b);
+// }
+
 #[test]
-fn inout() {
-    const IN_OUT: &str = "void func( out vec4 fragColor, in vec2 fragCoord )
-{}";
+fn just_out() {
+    const OUT: &str = "void func( out vec4 fragColor, in vec2 fragCoord )
+{ fragColor = vec2(0); }";
 
     let b = // ...
-"fn func(fragColor: vec4<f32>, fragCoord: vec2<f32>)  {
+"fn func(fragColor: ptr<function, vec4<f32>>, fragCoord: vec2<f32>)  {
+	(*fragColor) = vec2<f32>(0.);
 } 
 
 ";
 
-    assert_eq!(&do_parse(IN_OUT.to_string()), b);
+    assert_eq!(&do_parse(OUT.to_string()), b);
 }
 
 #[test]
@@ -220,10 +235,30 @@ fn array() {
     const ARRAY: &str = "const float yaa[2] = float[2](5.5, 8.7);";
 
     let b = // ...
-"const yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
+"let yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
 ";
 
     assert_eq!(&do_parse(ARRAY.to_string()), b);
+}
+
+#[test]
+fn array_assignment() {
+    const MAT3: &str = "
+void dum() {
+    mat3 m;
+    m[0] = vec3(1.0);
+}
+";
+
+    let b = // ...
+"fn dum()  {
+	let m: mat3x3<f32>;
+	m[0] = vec3<f32>(1.);
+} 
+
+";
+
+    assert_eq!(&do_parse(MAT3.to_string()), b);
 }
 
 #[test]
@@ -349,6 +384,7 @@ void main() {
 
 }
 ";
+    // TODO: this should be a var, not a let
     let b = // ...
 "fn main()  {
 	let q: f32; if (w) { q = 1; } else { q = 4; };
@@ -382,23 +418,6 @@ void main(  )
 ";
 
     assert_eq!(&do_parse(FOR_CONVERT_TO_FLOAT.to_string()), b);
-}
-
-// TODO: out keywords means the wgsl version should return the corresponding value
-#[test]
-fn out_in() {
-    const OUT: &str = "
-void func( out vec4 U, in vec2 pos )
-{ a= 5;}";
-
-    let b = // ...
-"fn func(U: vec4<f32>, pos: vec2<f32>)  {
-	a = 5;
-} 
-
-";
-
-    assert_eq!(&do_parse(OUT.to_string()), b);
 }
 
 #[test]
@@ -536,19 +555,17 @@ fn main()  {
 #[test]
 fn var_dot() {
     const VAR_DOT: &str = "
- float t = 1;
 void main() {
   float atj = 4;
-  atj.xy = 5;
+  atj.xy = vec2(5);
 }
 ";
 
     let b = // ...
-"let t: f32 = 1.;
-fn main()  {
-	let atj: f32 = 4.;
+"fn main()  {
+	var atj: f32 = 4.;
 	var atjxy = atj.xy;
-	atjxy = 5;
+	atjxy = vec2<f32>(5.);
 	atj.x = atjxy.x;
 	atj.y = atjxy.y;
 } 
@@ -608,4 +625,17 @@ fn reassigned_arg() {
 ";
 
     assert_eq!(&do_parse(REASSIGNED_ARG.to_string()), b);
+}
+
+#[test]
+fn const_let() {
+    const CONST: &str = "
+const float c = 1;
+";
+
+    let b = // ...
+"let c: f32 = 1.;
+";
+
+    assert_eq!(&do_parse(CONST.to_string()), b);
 }

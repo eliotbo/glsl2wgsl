@@ -627,6 +627,29 @@ pub fn show_array_spec_wgsl<F>(
     }
 }
 
+// array value assignments
+pub fn show_bracket_wgsl<F>(f: &mut F, a: &syntax::ArraySpecifier, e1: &syntax::Expr)
+where
+    F: Write,
+{
+    for dimension in &a.dimensions {
+        match *dimension {
+            // TODO
+            syntax::ArraySpecifierDimension::Unsized => {
+                show_expr(f, &e1);
+                let _ = f.write_str("[?]");
+            }
+            syntax::ArraySpecifierDimension::ExplicitlySized(ref e2) => {
+                show_expr(f, &e1);
+                let _ = f.write_str("[");
+                show_expr(f, &e2);
+                let _ = f.write_str("]");
+            }
+        }
+    }
+}
+
+// array types
 pub fn show_array_spec_value_wgsl<F>(f: &mut F, a: &syntax::ArraySpecifier, e1: &syntax::Expr)
 where
     F: Write,
@@ -699,7 +722,7 @@ where
 {
     match *q {
         syntax::StorageQualifier::Const => {
-            let _ = f.write_str("const");
+            let _ = f.write_str("let");
         }
         syntax::StorageQualifier::InOut => {
             let _ = f.write_str("inout ");
@@ -708,7 +731,7 @@ where
             let _ = f.write_str("");
         }
         syntax::StorageQualifier::Out => {
-            let _ = f.write_str("");
+            let _ = f.write_str("out ");
         }
         syntax::StorageQualifier::Centroid => {
             let _ = f.write_str("centroid");
@@ -1011,6 +1034,8 @@ where
             let mut swizzled = false;
             let mut left_variable = "variable_name".to_string();
             let mut swizzle = "swizzle".to_string();
+
+            /////////////////////////////// Swizzle ///////////////////////////////////////////
             if let syntax::Expr::Dot(left, syntax::Identifier(right)) = &**v2 {
                 if is_swizzle(right) {
                     swizzled = true;
@@ -1036,10 +1061,15 @@ where
                     let _ = f.write_str(right);
                 }
             }
+            /////////////////////////////// Swizzle ///////////////////////////////////////////
 
             if !swizzled {
                 if v.precedence() < op.precedence() {
-                    show_expr(f, &v);
+                    if let syntax::Expr::Bracket(ref array_expr, ref array_spec) = *v {
+                        show_bracket_wgsl(f, &array_spec, &array_expr);
+                    } else {
+                        show_expr(f, &v);
+                    }
                 } else {
                     let _ = f.write_str("(");
                     show_expr(f, &v);
@@ -1536,6 +1566,8 @@ where
             } else if i == 0 {
                 // if the scope is global, use var<private>
                 let _ = f.write_str("var<private> ");
+            } else {
+                let _ = f.write_str("let ");
             }
         }
         show_identifier(f, name);

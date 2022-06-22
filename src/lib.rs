@@ -72,6 +72,8 @@ pub fn postprocessing(i: &str) -> String {
     // the following parsers cannot fail, so we can use unwrap freely
     let mut buf: String;
 
+    // println!("{:?}", i);
+
     if let Ok((_, lets)) = let2var_parser(i) {
         buf = lets;
     } else {

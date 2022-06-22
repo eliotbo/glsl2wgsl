@@ -1,7 +1,5 @@
-fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)  {
-	var fragCoord_var = fragCoord;
-	var fragColor_var = fragColor;
-	fragCoord_var = vec2<f32>(0.);
-	fragColor_var = vec2<f32>(1.);
+fn dum()  {
+	let m: mat3x3<f32>;
+	m[0] = vec3<f32>(1.);
 } 
 

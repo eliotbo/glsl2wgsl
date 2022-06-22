@@ -3,7 +3,7 @@ use glsl2wgsl::nom_helpers::Span;
 use glsl2wgsl::parser::Parse;
 use glsl2wgsl::syntax;
 // use glsl::*;
-use glsl2wgsl::let2var::{let2var_parser, search_for_full_identifier};
+use glsl2wgsl::let2var::let2var_parser;
 use glsl2wgsl::replace_defines::definition_parser;
 use glsl2wgsl::replace_main::replace_main_line;
 use glsl2wgsl::replace_unis::uniform_vars_parser;
