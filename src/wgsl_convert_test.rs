@@ -685,3 +685,22 @@ const float c = 1;
 
     assert_eq!(&do_parse(CONST.to_string()), b);
 }
+
+#[test]
+fn replace_mod_test() {
+    const MOD: &str = "void main()  {
+    float a = mod(g, q);
+    float b = mod(mod(qr, to), mod(other, less));
+} 
+";
+
+    let b = // ...
+"fn main()  {
+	let a: f32 = ((g) % (q));
+	let b: f32 = ((((qr) % (to))) % (((other) % (less))));
+} 
+
+";
+
+    assert_eq!(&do_parse(MOD.to_string()), b);
+}

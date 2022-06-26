@@ -29,6 +29,7 @@ pub mod parse_func_defines;
 pub mod replace_defines;
 pub mod replace_inouts;
 pub mod replace_main;
+pub mod replace_mod;
 pub mod replace_texel_fetch;
 pub mod replace_unis;
 
@@ -36,6 +37,7 @@ use insert_new_arg_vars::add_var_to_reassigned_args;
 use parse_func_defines::*;
 use replace_defines::*;
 use replace_inouts::{replace_inouts, search_and_replace_void};
+use replace_mod::replace_all_mods;
 use replace_texel_fetch::replace_all_texture_and_texel_fetch;
 use replace_unis::*;
 
@@ -122,6 +124,19 @@ pub fn postprocessing(i: &str) -> String {
             .to_string();
     }
 
+    if let Ok((_, rmod)) = replace_all_mods(&buf) {
+        buf = rmod;
+    } else {
+        return "Encountered error while attempting to replace mod(a,b) with a % b".to_string();
+    }
+
+    // replace_all_mods() is applied twice in a row so that the mod(mod(a,b), c) is replaced with (a % b) % c
+    // instead of mod(a, b) % c
+    if let Ok((_, rmod)) = replace_all_mods(&buf) {
+        buf = rmod;
+    } else {
+        return "Encountered error while attempting to replace mod(a,b) with a % b".to_string();
+    }
     buf
 }
 
