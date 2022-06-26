@@ -431,6 +431,73 @@ pub fn argument1(i: &str) -> ParserResult<String> {
     Ok((rest, parsed_text))
 }
 
+pub fn till_next_bracket_or_comma(i: &str) -> ParserResult<(String, String)> {
+    map(
+        many_till(anychar, peek(alt((tag("<"), tag(">"), tag(")"), tag(","))))),
+        |(so_far, brack): (Vec<char>, &str)| {
+            //
+            let text = so_far.iter().collect::<String>();
+            return (text, brack.to_string());
+        },
+    )(i)
+}
+
+// parse one argument of a function call
+pub fn type_argument1(i: &str) -> ParserResult<String> {
+    let mut parsed_text: String = "".to_string();
+    let mut scope = 0;
+    let mut rest = i;
+    loop {
+        let (rest1, (text_so_far, paren_or_comma)): (&str, (String, String)) =
+            till_next_bracket_or_comma(rest)?;
+        rest = rest1;
+        parsed_text += &text_so_far;
+
+        // println!("scope: {:?}", scope);
+        match paren_or_comma.as_str() {
+            "<" => {
+                let (rest1, _single) = char('<')(rest)?;
+                rest = rest1;
+                scope += 1;
+                parsed_text += &paren_or_comma;
+            }
+            ">" => {
+                scope -= 1;
+
+                // end of function call
+                if scope == -1 {
+                    break;
+                } else {
+                    let (rest1, _single) = char('>')(rest)?;
+                    rest = rest1;
+                    parsed_text += &paren_or_comma;
+                }
+            }
+            _ => {
+                // case of a comma or a
+                // end of argument
+
+                if scope == 0 {
+                    break;
+                } else {
+                    let (rest1, _single) = char(',')(rest)?;
+                    rest = rest1;
+                    parsed_text += &paren_or_comma;
+                }
+            }
+        }
+
+        // for any non-breaking char, parse it so we can get to the next ")", "(", or ","
+        // let (rest1, _char) = anychar(rest)?;
+        // rest = rest1;
+
+        // println!("parsed_text: {:?}", parsed_text);
+    }
+    // println!("parsed_text: {:?}", parsed_text);
+
+    Ok((rest, parsed_text))
+}
+
 pub fn function_call_args_anychar(i: &str) -> ParserResult<Vec<String>> {
     map(
         // preceded(

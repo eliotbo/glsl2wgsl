@@ -1,6 +1,28 @@
 use crate::do_parse;
 
 #[test]
+fn replace_main() {
+    const MAIN_IMAGE: &str = // ...
+        "void mainImage( out vec4 fragColor, in vec2 fragCoord ) {}";
+
+    let b = // ...
+"[[stage(compute), workgroup_size(8, 8, 1)]]
+fn update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
+    let R: vec2<f32> = uni.iResolution.xy;
+    let y_inverted_location = vec2<i32>(i32(invocation_id.x), i32(R.y) - i32(invocation_id.y));
+    let location = vec2<i32>(i32(invocation_id.x), i32(invocation_id.y));
+    
+	var fragColor: vec4<f32>;
+	var fragCoord = vec2<f32>(f32(location.x), f32(location.y) );
+
+} 
+
+";
+
+    assert_eq!(&do_parse(MAIN_IMAGE.to_string()), b);
+}
+
+#[test]
 fn single_line_if() {
     let a: &str = // ... 
 "void norm(vec3 po) {

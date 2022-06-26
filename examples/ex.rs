@@ -11,6 +11,7 @@ use glsl2wgsl::insert_new_arg_vars::*;
 use glsl2wgsl::parse_func_defines::*;
 use glsl2wgsl::replace_defines::*;
 use glsl2wgsl::replace_inouts::*;
+use glsl2wgsl::replace_main::*;
 
 // use glsl2wgsl::replace_inouts::{replace_inouts, search_and_replace_void};
 // use glsl2wgsl::replace_main::replace_main_line;
@@ -61,12 +62,47 @@ void main() {
 ";
 
 const MAT3: &str = "
- float d, h = 0;
+ void main() { float f; }
 ";
+
+const MAIN_IMAGE: &str = // ...
+    "void mainImage( out vec4 fragColor, in vec2 fragCoord ) {}";
+
 // TODO: fix the newline for statements
 
 // 2: delete all commented lines before going into the define_func
 // 3: take all lines into account when reporting the line number in errors
+// 5. clamp(sum, 0., 1.); // where  sum is a vec2
+// 6. mainImage does not work. Add test
+// 7. mod(a, b)
+// fn fbm(uv: vec2<f32>) -> f32 {
+// 	let f: f32;
+// 	let m: mat2x2<f32> = mat2x2<f32>(1.6, 1.2, -1.2, 1.6);
+// 	f = 0.5 * noise(uv);
+// 	uv = m * uv;
+// 	f = f + (0.25 * noise(uv));
+// 	uv = m * uv;
+// 	f = f + (0.125 * noise(uv));
+// 	uv = m * uv;
+// 	f = f + (0.0625 * noise(uv));
+// 	uv = m * uv;
+// 	f = 0.5 + 0.5 * f;
+// 	return f;
+// }
+
+// 8. inverseSqrt
+
+const MAIN_WGSL: &str = "fn mainImage(out fragColor: vec4<f32>, fragCoord: vec2<f32>) -> () {
+} 
+";
+
+const MAIN_WGSL2: &str =
+    " fn mainImage(fragColor: ptr<function, vec4<f32>>, fragCoord: vec2<f32>)  {
+} 
+";
+
+const MAIN_WGSL3: &str = "fn mainImage(out fragColor: vec4<f32>, fragCoord: vec2<f32>) -> () {
+} ";
 
 fn main() {
     // //
@@ -100,15 +136,18 @@ fn main() {
     // // // println!("replaced_defines: {:?}", replaced_defines);
 
     // // To print the abstract syntax tree, uncomment the following line
-    let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
+    // let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
 
     // let buf = do_parse(LET2VAR_SHORT.to_string());
-    let buf = do_parse(MAT3.to_string());
+    let buf = do_parse(MAIN_IMAGE.to_string());
 
-    // let buf = replace_inouts(IN_OUT).unwrap().1;
+    // let buf = parse_var_and_type(MAIN_WGSL).unwrap().1;
+    // let ret = replace_main_line(MAIN_WGSL2);
+    // println!("{:?}", ret);
+    // let buf = ret.unwrap().1;
 
     fs::write("./parsed_file.txt", &buf).expect("Unable to write file");
 
-    println!("{:?}", trans);
+    // println!("{:?}", trans);
     // println!("{:?}", buf);
 }

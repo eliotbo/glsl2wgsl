@@ -27,14 +27,15 @@ fn update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
     ";
 
 pub fn replace_main(i: &str) -> ParserResult<String> {
-    map(many_till(anychar, tag("fn mainImage(")), |s| {
-        s.0.clone().iter().collect::<String>()
-    })(i)
+    map(
+        many_till(anychar, tag("fn mainImage(")).and(opt(tag("out "))),
+        |(s, _)| s.0.clone().iter().collect::<String>(),
+    )(i)
 }
 
 pub fn parse_var_and_type(i: &str) -> ParserResult<String> {
     map(
-        separated_pair(anychar_underscore, tag(": "), anychar_type),
+        separated_pair(anychar_underscore, tag(": "), type_argument1),
         |s| s.0,
     )(i)
 }
@@ -45,6 +46,8 @@ pub fn replace_main_vars(i: &str) -> ParserResult<Vec<String>> {
             separated_list1(tag(", "), parse_var_and_type),
             tag(") -> () {"),
         ),
+        // terminated(separated_list1(tag(", "), parse_var_and_type), tag(")")),
+        // separated_list1(tag(", "), parse_var_and_type),
         |s| s,
     )(i)
 }
