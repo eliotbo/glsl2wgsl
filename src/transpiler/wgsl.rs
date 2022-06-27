@@ -97,6 +97,7 @@ where
 pub fn convert_builtin_functions(f: &str) -> &str {
     match f {
         "smoothstep" => "smoothStep",
+        "inversesqrt" => "inverseSqrt",
         _ => f,
     }
 }
@@ -1585,7 +1586,7 @@ pub fn show_single_declaration<F>(
                 // if the scope is global, use var<private>
                 let _ = f.write_str("var<private> ");
             } else {
-                let _ = f.write_str("let ");
+                let _ = f.write_str("var ");
             }
         }
         show_identifier(f, name);

@@ -31,34 +31,20 @@ use std::fs;
 
 // TODO: fix the newline for statements
 
-// 2: delete all commented lines before going into the define_func
 // 3: take all lines into account when reporting the line number in errors
 // 5. clamp(sum, 0., 1.); // where  sum is a vec2
-// 7. mod(a, b)
-// fn fbm(uv: vec2<f32>) -> f32 {
-// 	let f: f32;
-// 	let m: mat2x2<f32> = mat2x2<f32>(1.6, 1.2, -1.2, 1.6);
-// 	f = 0.5 * noise(uv);
-// 	uv = m * uv;
-// 	f = f + (0.25 * noise(uv));
-// 	uv = m * uv;
-// 	f = f + (0.125 * noise(uv));
-// 	uv = m * uv;
-// 	f = f + (0.0625 * noise(uv));
-// 	uv = m * uv;
-// 	f = 0.5 + 0.5 * f;
-// 	return f;
-// }
-
-// 8. inverseSqrt
 
 const ONE_MOD: &str = "mod(g, q);
 a + mod(asdfas, rtefg(dd));";
 
-const MOD: &str = "void main()  {
-    float a = mod(g, q);
-    float b = mod(mod(qr, to), mod(other, less));
-} 
+const MOD: &str = "
+void main()  {
+	float q = 2
+    // if (w) { q = 1; } else { q = 4; };
+    q = w?1:4;
+}
+
+
 ";
 
 fn main() {

@@ -2,11 +2,10 @@
 // "fn mainImage( U: vec4<f32>,  pos: vec2<f32>) -> () {",
 // by the UPDATE_INIT code block below
 
-use nom::bytes::complete::{tag, take_while1};
+use nom::bytes::complete::tag;
 use nom::character::complete::anychar;
-use nom::combinator::{eof, map, opt};
-use nom::multi::{many0, many_till, separated_list1};
-use nom::sequence::{separated_pair, terminated};
+use nom::combinator::{eof, map};
+use nom::multi::{many0, many_till};
 use nom::Parser;
 
 use crate::nom_helpers::*;

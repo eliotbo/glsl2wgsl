@@ -2,11 +2,9 @@ use crate::do_parse;
 
 #[test]
 fn replace_main() {
-    const MAIN_IMAGE: &str = // ...
-        "void mainImage( out vec4 fragColor, in vec2 fragCoord ) {}";
+    const MAIN_IMAGE: &str = "void mainImage( out vec4 fragColor, in vec2 fragCoord ) {}";
 
-    let b = // ...
-"[[stage(compute), workgroup_size(8, 8, 1)]]
+    let b = "[[stage(compute), workgroup_size(8, 8, 1)]]
 fn update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
     let R: vec2<f32> = uni.iResolution.xy;
     let y_inverted_location = vec2<i32>(i32(invocation_id.x), i32(R.y) - i32(invocation_id.y));
@@ -24,14 +22,12 @@ fn update([[builtin(global_invocation_id)]] invocation_id: vec3<u32>) {
 
 #[test]
 fn single_line_if() {
-    let a: &str = // ... 
-"void norm(vec3 po) {
+    let a: &str = "void norm(vec3 po) {
   if (r.x > d.x)   t =3;
   
 }";
 
-    let b = // ...
-"fn norm(po: vec3<f32>)  {
+    let b = "fn norm(po: vec3<f32>)  {
 	if (r.x > d.x) { t = 3; }
 } 
 
@@ -42,16 +38,14 @@ fn single_line_if() {
 
 #[test]
 fn two_lines_if() {
-    let a: &str = // ... 
-"void norm(vec3 po) {
+    let a: &str = "void norm(vec3 po) {
   if (r.x > d.x)  { 
     r = d;
     t =3;
   }
 } ";
 
-    let b = // ...
-"fn norm(po: vec3<f32>)  {
+    let b = "fn norm(po: vec3<f32>)  {
 	if (r.x > d.x) {
 		r = d;
 		t = 3;
@@ -63,12 +57,10 @@ fn two_lines_if() {
 
 #[test]
 fn simple_vec2() {
-    let a: &str = // ... 
-"vec2 e = vec2(3.0);
+    let a: &str = "vec2 e = vec2(3.0);
 float b = 1.0;";
 
-    let b = // ...
-"let e: vec2<f32> = vec2<f32>(3.);
+    let b = "let e: vec2<f32> = vec2<f32>(3.);
 let b: f32 = 1.;
 ";
 
@@ -77,10 +69,10 @@ let b: f32 = 1.;
 
 // #[test]
 // fn simple_const() {
-//     let a: &str = // ...
+//     let a: &str =
 // "const vec2 e = vec2(.00035, -.00035);";
 
-//     let b = // ...
+//     let b =
 // "const e: vec2<f32> = vec2<f32>(0.00035, -0.00035);
 // ";
 
@@ -94,8 +86,7 @@ vec3 norm(vec3 po) {}
 vec2 norm2(vec2 wq) {}
 ";
 
-    let b = // ...
-"fn norm(po: vec3<f32>) -> vec3<f32> {
+    let b = "fn norm(po: vec3<f32>) -> vec3<f32> {
 } 
 
 fn norm2(wq: vec2<f32>) -> vec2<f32> {
@@ -114,8 +105,7 @@ fn func_proto_content() {
   return what;
 }";
 
-    let b = // ...
-"fn norm(po: vec3<f32>) -> vec3<f32> {
+    let b = "fn norm(po: vec3<f32>) -> vec3<f32> {
 	let what: i32 = 3;
 	let a: i32 = 2;
 	return what;
@@ -133,8 +123,7 @@ void norm(vec3 po) {
   rd.x *= 2. + 3.;
 }";
 
-    let b = // ...
-"var rd: vec4<f32> = vec4<f32>(0.);
+    let b = "var rd: vec4<f32> = vec4<f32>(0.);
 fn norm(po: vec3<f32>)  {
 	rd.x = rd.x * (2. + 3.);
 } 
@@ -147,8 +136,7 @@ fn norm(po: vec3<f32>)  {
 #[test]
 fn for_loop() {
     const FOR_LOOP: &str = "void main() { for(int i = 0; i < 120; i++) { a = 3; } }";
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 
 	for (var i: i32 = 0; i < 120; i = i + 1) {
 		a = 3;
@@ -167,8 +155,7 @@ fn array_decl1() {
   float r = 2.0, e = 1.0;
 }";
 
-    let b = // ...
-"fn norm(po: vec3<f32>)  {
+    let b = "fn norm(po: vec3<f32>)  {
 	let r: f32 = 2.;
 	let e: f32 = 1.;
 } 
@@ -182,8 +169,7 @@ fn array_decl1() {
 fn array_decl2() {
     const ARRAYED_DECLARATION: &str = " float d = 0.0, h;";
 
-    let b = // ...
-"let d: f32 = 0.;
+    let b = "let d: f32 = 0.;
 let h: f32 = 0.;
 ";
 
@@ -194,8 +180,7 @@ let h: f32 = 0.;
 fn array_decl3() {
     const ARRAYED_DECLARATION: &str = " float d, h = 0;";
 
-    let b = // ...
-"var<private> d: f32 = 0.;
+    let b = "var<private> d: f32 = 0.;
 let h: f32 = 0.;
 ";
 
@@ -215,8 +200,7 @@ fn if_else() {
 
 }";
 
-    let b = // ...
-"fn norm(po: vec3<f32>)  {
+    let b = "fn norm(po: vec3<f32>)  {
 	if (r.x > d.x) {
 		r = d;
 	} else { 
@@ -236,7 +220,7 @@ fn if_else() {
 //     const IN_OUT: &str = "void func( out vec4 fragColor, in vec2 fragCoord )
 // {}";
 
-//     let b = // ...
+//     let b =
 // "fn func(fragColor: vec4<f32>, fragCoord: vec2<f32>)  {
 // }
 
@@ -250,8 +234,7 @@ fn just_out() {
     const OUT: &str = "void func( out vec4 fragColor, in vec2 fragCoord )
 { fragColor = vec2(0); }";
 
-    let b = // ...
-"fn func(fragColor: ptr<function, vec4<f32>>, fragCoord: vec2<f32>)  {
+    let b = "fn func(fragColor: ptr<function, vec4<f32>>, fragCoord: vec2<f32>)  {
 	(*fragColor) = vec2<f32>(0.);
 } 
 
@@ -267,8 +250,7 @@ fn simple_struct() {
 float intensity;
 };
 ";
-    let b = // ...
-"struct Light {
+    let b = "struct Light {
 	intensity: f32;
 };
 ";
@@ -280,8 +262,7 @@ float intensity;
 fn array() {
     const ARRAY: &str = "const float yaa[2] = float[2](5.5, 8.7);";
 
-    let b = // ...
-"let yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
+    let b = "let yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
 ";
 
     assert_eq!(&do_parse(ARRAY.to_string()), b);
@@ -296,9 +277,8 @@ void dum() {
 }
 ";
 
-    let b = // ...
-"fn dum()  {
-	let m: mat3x3<f32>;
+    let b = "fn dum()  {
+	var m: mat3x3<f32>;
 	m[0] = vec3<f32>(1.);
 } 
 
@@ -314,8 +294,7 @@ void main() {}
 void main() {}
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 } 
 
 fn main()  {
@@ -339,8 +318,7 @@ void main() {
   }
 }";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	if (w) {
 		if (w) {
 			return true;
@@ -367,8 +345,7 @@ float func(float x) {
 }
 ";
 
-    let b = // ...
-"fn func(x: f32) -> f32 {
+    let b = "fn func(x: f32) -> f32 {
 	q = 10.;
 } 
 
@@ -386,8 +363,7 @@ void main() {
 
   blah.rg += 2;
 }";
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	var qxy = q.xy;
 	qxy = vec2<f32>(-1., 3.);
 	q.x = qxy.x;
@@ -412,8 +388,7 @@ void main() {
 }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	let q: vec2<f32> = vec2<f32>(-1., 3.);
 } 
 
@@ -431,8 +406,7 @@ void main() {
 }
 ";
     // TODO: this should be a var, not a let
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	let q: f32; if (w) { q = 1; } else { q = 4; };
 } 
 
@@ -453,8 +427,7 @@ void main(  )
 }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 
 	for (var i: f32 = 1.; i < 2.; i = i + 1.) {
 	}
@@ -479,8 +452,7 @@ void main() {
  }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(12(a))));
 	textureLoad(BUFFER_ch4(i), vec2<i32>(Bi(st(a))));
 	gold = bobbyFisher(15, GR);
@@ -504,8 +476,7 @@ void Simulation()
 }
 ";
 
-    let b = // ...
-"fn Simulation()  {
+    let b = "fn Simulation()  {
 
 	for (var i: i32 = -2; i <= 2; i = i + 1) {
 	for (var j: i32 = -2; j <= 2; j = j + 1) {
@@ -537,8 +508,7 @@ float func2(float c, inout vec4 wert, inout float a)
  c = 23;
 }";
 
-    let b = // ...
-"fn func(a: f32, P: ptr<function, vec4<f32>>)  {
+    let b = "fn func(a: f32, P: ptr<function, vec4<f32>>)  {
 	(*P).x = (*P).x + (1.);
 	let a2: f32 = (*P).w;
 } 
@@ -564,8 +534,7 @@ void main() {
  }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	var wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q));
 	let wqe: vec4<f32> = textureLoad_CONVERT_TO_i32(BUFFER_ch0, vec2<i32>(q / R));
 } 
@@ -586,8 +555,7 @@ q2 = 4;
   }
 ";
 
-    let b = // ...
-"var<private> q2: f32;
+    let b = "var<private> q2: f32;
 fn main()  {
 	p = 12;
 	q2 = 4;
@@ -607,8 +575,7 @@ void main() {
 }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	var atj: f32 = 4.;
 	var atjxy = atj.xy;
 	atjxy = vec2<f32>(5.);
@@ -636,8 +603,7 @@ void f() {
 }
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	let c: f32 = 0.;
 } 
 
@@ -660,8 +626,7 @@ fn reassigned_arg() {
 }
 ";
 
-    let b = // ...
-"fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)  {
+    let b = "fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)  {
 	var fragCoord_var = fragCoord;
 	var fragColor_var = fragColor;
 	fragCoord_var = vec2<f32>(0.);
@@ -679,8 +644,7 @@ fn const_let() {
 const float c = 1;
 ";
 
-    let b = // ...
-"let c: f32 = 1.;
+    let b = "let c: f32 = 1.;
 ";
 
     assert_eq!(&do_parse(CONST.to_string()), b);
@@ -694,8 +658,7 @@ fn replace_mod_test() {
 } 
 ";
 
-    let b = // ...
-"fn main()  {
+    let b = "fn main()  {
 	let a: f32 = ((g) % (q));
 	let b: f32 = ((((qr) % (to))) % (((other) % (less))));
 } 

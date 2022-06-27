@@ -191,3 +191,38 @@ pub fn func_definition_parser(i: &str) -> ParserResult<String> {
 
     success("".to_string())("")
 }
+
+// // pub fn remove_comments(i: &str) -> ParserResult<String> {
+// //     map(
+// //         many0(many_till(anychar, tag("//").and(many_till(anychar, eol)))),
+// //         |x| {
+// //             let y = x
+// //                 .iter()
+// //                 .map(|z| z.0.iter().collect::<String>())
+// //                 .collect::<Vec<String>>();
+// //             y.join("\n")
+// //         },
+// //     )(i)
+// // }
+
+// pub fn func_definition_parser(i: &str) -> ParserResult<String> {
+//     // let mut ii = i.to_string();
+
+//     // if let Ok((_, removed_comments)) = remove_comments(i) {
+//     //     ii = removed_comments;
+//     // }
+
+//     // let rc = removed_comments.clone();
+
+//     let (_rest, define_funcs) = get_all_define_funcs(i)?;
+
+//     let (_, no_defines) = erase_all_func_defines(i)?;
+
+//     // println!("no_defines : {:?}", define_funcs);
+
+//     if let Ok((_rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
+//         return success(so_far.clone())("");
+//     }
+
+//     success("".to_string())("")
+// }

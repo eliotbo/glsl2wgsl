@@ -58,18 +58,53 @@ extern "C" {
 pub fn greet(_v: &str) {}
 
 pub fn preprocessing(i: &str) -> ParserResult<String> {
-    let (_rest, replaced_defines_func) = func_definition_parser(&i)?;
-    if let Ok((_rest, replaced_defines)) = definition_parser(replaced_defines_func.as_str()) {
-        return success(replaced_defines)("");
+    // let mut buf = "".to_string();
+
+    let removed_comments2: &str = &i
+        .lines()
+        .map(move |x| {
+            if let Some((y, _)) = x.split_once("//") {
+                y.to_string() + "\n"
+            } else {
+                x.to_string() + "\n"
+            }
+        })
+        .collect::<String>();
+
+    // println!("removed_comments2 : {:?}", removed_comments2);
+
+    // if let Ok((_, replaced_defines_func)) = func_definition_parser(removed_comments2) {
+    //     buf = replaced_defines_func;
+    // }
+
+    // if let Ok((_, defined)) = func_definition_parser(&buf) {
+    //     buf = defined;
+    // }
+
+    // success(buf)("")
+
+    // need help simplifying this.
+    if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&removed_comments2) {
+        //
+        if let Ok((_rest2, replaced_defines)) = definition_parser(replaced_defines_func.as_str()) {
+            return success(replaced_defines)("");
+        } else {
+            let vek = VerboseErrorKind::Context("Could not properly parse the #define functions");
+            let _ve = VerboseError {
+                errors: vec![("", vek)],
+            };
+            Err(nom::Err::Failure(_ve))
+        }
     } else {
-        let vek = VerboseErrorKind::Context("Could not properly parse the #define functions");
+        let vek = VerboseErrorKind::Context("Could not properly remove comments");
         let _ve = VerboseError {
-            errors: vec![(_rest, vek)],
+            errors: vec![(i, vek)],
         };
         Err(nom::Err::Failure(_ve))
     }
 }
 
+// TODO clean the "if let - else" patterns. Is there a way to use the "?" operator?
 pub fn postprocessing(i: &str) -> String {
     // the following parsers cannot fail, so we can use unwrap freely
     let mut buf: String;

@@ -9,7 +9,7 @@ use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take_while1};
 use nom::character::complete::{alpha1, alphanumeric1, anychar};
 use nom::combinator::{eof, map, opt, peek, recognize, success, verify};
-use nom::multi::{count, many0, many_till};
+use nom::multi::{many0, many_till};
 use nom::sequence::{pair, preceded};
 use nom::Parser;
 

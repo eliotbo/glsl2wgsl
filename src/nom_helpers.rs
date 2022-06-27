@@ -12,7 +12,7 @@ use nom::{Err as NomErr, IResult};
 
 use nom::{
     character::complete::{alpha1, alphanumeric1},
-    sequence::{delimited, pair, preceded},
+    sequence::{delimited, pair},
     Parser,
 };
 
