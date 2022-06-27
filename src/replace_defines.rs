@@ -4,10 +4,10 @@
 use crate::nom_helpers::*;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
-use nom::character::complete::{anychar, space1};
+use nom::character::complete::{anychar, none_of, space1};
 use nom::combinator::{eof, map, success, verify};
-use nom::multi::{many0, many_till};
-use nom::sequence::preceded;
+use nom::multi::{count, many0, many_till};
+use nom::sequence::{pair, preceded};
 use nom::Parser;
 
 #[derive(Debug)]
@@ -43,13 +43,17 @@ pub fn find_and_replace_single_define(
     map(
         many0(many_till(
             anychar,
-            verify(anychar_underscore, |x: &str| x.to_string() == name),
+            pair(
+                count(none_of(ALPHANUM_UNDER), 1),
+                verify(anychar_underscore, |x: &str| x.to_string() == name),
+            ),
         ))
         .and(rest_of_script),
         |(lines, rest)| {
             let mut all_script = "".to_string();
-            for (so_far_chars, _) in lines.iter() {
+            for (so_far_chars, (single_char, _name)) in lines.iter() {
                 let mut so_far = so_far_chars.iter().collect::<String>();
+                so_far += &single_char.iter().collect::<String>();
 
                 so_far.push_str(&replace_by);
                 all_script.push_str(&so_far);

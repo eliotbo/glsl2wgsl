@@ -335,6 +335,19 @@ void main() {
 }
 
 #[test]
+fn defs() {
+    const DEFS: &str = "#define SOME
+// #define OTHER
+";
+
+    let b = "let SOME: bool = true;
+let OTHER: bool = false;
+";
+
+    assert_eq!(&do_parse(DEFS.to_string()), b);
+}
+
+#[test]
 fn define() {
     const DEFINE: &str = "
 #define in_body 10.0
@@ -446,16 +459,16 @@ fn define_func() {
 #define q 12
 #define t(pk, l) bobbyFisher(15, pk)
 void main() {
-   texel(ch0, q);
+   texel(ch0, f);
    texel(ch4, st);
-   gold = t(GR, big);
+   gold = q + t(GR, big);
  }
 ";
 
     let b = "fn main()  {
-	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(12(a))));
+	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(f(a))));
 	textureLoad(BUFFER_ch4(i), vec2<i32>(Bi(st(a))));
-	gold = bobbyFisher(15, GR);
+	gold = 12 + bobbyFisher(15, GR);
 } 
 
 ";

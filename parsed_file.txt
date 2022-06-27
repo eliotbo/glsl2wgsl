@@ -1,3 +1,2 @@
-There seems to be a syntax error in the input GLSL code: 
-line: 3, column: 2, 
-buggy line:float q = 2
+let SOME: bool = true;
+let OTHER: bool = false;

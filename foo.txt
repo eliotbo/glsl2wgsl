@@ -1,4 +1,154 @@
-fn func(fragColor: vec2<f32>, fragCoord: vec2<f32>)
+
+
+
+
+// Number of advection substeps to use. Useful to increase this for large ADVECTION_SCALE. Must be >= 1
+// Advection distance multiplier.
+// Scales the effect of turbulence on advection.
+// Scales the effect of turbulence on velocity. Use small values.
+// Scales the effect of vorticity confinement on velocity.
+// Scales diffusion.
+// Scales the effect of vorticity confinement on advection.
+// Scales the effect of divergence on advection.
+// Scales the effect of velocity on advection.
+// Amount of divergence minimization. Too much will cause instability.
+// If 0.0, compute the gradient at (0,0). If 1.0, compute the gradient at the advection distance.
+// If 0.0, compute the laplacian at (0,0). If 1.0, compute the laplacian at the advection distance.
+// Scales damping force.
+// Overall velocity multiplier
+// Mixes the previous velocity with the new velocity (range 0..1).
+
+
+
+// These control the (an)isotropy of the various kernels
+
+
+
+// These define weighting functions applied at each of the scales, i=0 being the finest detail.
+////
+////
+//////
+////////
+
+
+// Scales pressure advection distance.
+// // Pressure diffusion.
+// Mixes the previous pressure with the new pressure.
+
+
+
+// Scales mouse interaction effect
+// Scales mouse interaction radius
+
+
+
+// If defined, "pump" velocity in the center of the screen. If undefined, alternate pumping from the sides of the screen.
+//// Amplitude and cycle time for the "pump" at the center of the screen.
+
+
+
+float laplacian_poisson(vec2 fragCoord) {
+    const float _K0 = -20.0/6.0, _K1 = 4.0/6.0, _K2 = 1.0/6.0;
+    vec2 texel = 1.0/iResolution.xy;
+    vec2 uv = fragCoord * texel;
+    vec4 t = vec4(texel, -texel.y, 0);
+    float mip = 0.0;
+
+    float p =    textureLod(POIS_SAMPLER, fract(uv+t.ww), mip).POIS_CH; float p_n =  textureLod(POIS_SAMPLER, fract(uv+t.wy), mip).POIS_CH; float p_e =  textureLod(POIS_SAMPLER, fract(uv+t.xw), mip).POIS_CH;
+    float p_s =  textureLod(POIS_SAMPLER, fract(uv+t.wz), mip).POIS_CH; float p_w =  textureLod(POIS_SAMPLER, fract(uv+-t.xw), mip).POIS_CH; float p_nw = textureLod(POIS_SAMPLER, fract(uv+-t.xz), mip).POIS_CH;
+    float p_sw = textureLod(POIS_SAMPLER, fract(uv+-t.xy), mip).POIS_CH; float p_ne = textureLod(POIS_SAMPLER, fract(uv+t.xy), mip).POIS_CH; float p_se = textureLod(POIS_SAMPLER, fract(uv+t.xz), mip).POIS_CH;
+    
+    return _K0 * p + _K1 * (p_e + p_w + p_n + p_s) + _K2 * (p_ne + p_nw + p_se + p_sw);
+}
+
+void tex(vec2 uv, inout mat3 mx, inout mat3 my, inout mat3 mp, int degree) {
+    vec2 texel = 1.0/iResolution.xy;
+    float stride = float(1 << degree);
+    float mip = float(degree);
+    vec4 t = stride * vec4(texel, -texel.y, 0);
+
+    vec2 d =    textureLod(VORT_SAMPLER, fract(uv+t.ww), mip).VORT_CH; vec2 d_n =  textureLod(VORT_SAMPLER, fract(uv+t.wy), mip).VORT_CH; vec2 d_e =  textureLod(VORT_SAMPLER, fract(uv+t.xw), mip).VORT_CH;
+    vec2 d_s =  textureLod(VORT_SAMPLER, fract(uv+t.wz), mip).VORT_CH; vec2 d_w =  textureLod(VORT_SAMPLER, fract(uv+-t.xw), mip).VORT_CH; vec2 d_nw = textureLod(VORT_SAMPLER, fract(uv+-t.xz), mip).VORT_CH;
+    vec2 d_sw = textureLod(VORT_SAMPLER, fract(uv+-t.xy), mip).VORT_CH; vec2 d_ne = textureLod(VORT_SAMPLER, fract(uv+t.xy), mip).VORT_CH; vec2 d_se = textureLod(VORT_SAMPLER, fract(uv+t.xz), mip).VORT_CH;
+    
+    float p =    textureLod(POIS_SAMPLER, fract(uv+t.ww), mip).POIS_CH; float p_n =  textureLod(POIS_SAMPLER, fract(uv+t.wy), mip).POIS_CH; float p_e =  textureLod(POIS_SAMPLER, fract(uv+t.xw), mip).POIS_CH;
+    float p_s =  textureLod(POIS_SAMPLER, fract(uv+t.wz), mip).POIS_CH; float p_w =  textureLod(POIS_SAMPLER, fract(uv+-t.xw), mip).POIS_CH; float p_nw = textureLod(POIS_SAMPLER, fract(uv+-t.xz), mip).POIS_CH;
+    float p_sw = textureLod(POIS_SAMPLER, fract(uv+-t.xy), mip).POIS_CH; float p_ne = textureLod(POIS_SAMPLER, fract(uv+t.xy), mip).POIS_CH; float p_se = textureLod(POIS_SAMPLER, fract(uv+t.xz), mip).POIS_CH;
+    
+    mx =  mat3(d_nw.x, d_n.x, d_ne.x,
+               d_w.x,  d.x,   d_e.x,
+               d_sw.x, d_s.x, d_se.x);
+    
+    my =  mat3(d_nw.y, d_n.y, d_ne.y,
+               d_w.y,  d.y,   d_e.y,
+               d_sw.y, d_s.y, d_se.y);
+    
+    mp =  mat3(p_nw, p_n, p_ne,
+               p_w,  p,   p_e,
+               p_sw, p_s, p_se);
+}
+
+float reduce(mat3 a, mat3 b) {
+    mat3 p = matrixCompMult(a, b);
+    return p[0][0] + p[0][1] + p[0][2] +
+           p[1][0] + p[1][1] + p[1][2] +
+           p[2][0] + p[2][1] + p[2][2];
+}
+
+vec2 pois(vec2 fragCoord)
 {
-    fragCoord = vec2<f32>(0.);
+	vec2 uv = fragCoord.xy / iResolution.xy;
+    
+    float k0 = 0.16 // [0..0.5];
+    float k1 = 1.0 - 2.0*(0.16 // [0..0.5]);
+    
+    mat3 pois_x = mat3(
+        k0,  0.0, -k0,
+        k1,  0.0, -k1,
+        k0,  0.0, -k0
+    );
+     
+    mat3 pois_y = mat3(
+       -k0,  -k1,  -k0,
+        0.0,  0.0,  0.0,
+        k0,   k1,   k0
+    );
+
+    mat3 gauss = mat3(
+       0.0625, 0.125, 0.0625,  
+       0.125,  0.25,  0.125,
+       0.0625, 0.125, 0.0625
+    );
+    
+    mat3 mx, my, mp;
+    vec2 v = vec2(0);
+    
+    float wc = 0.0;
+    for (int i = 0; i < DEGREE; i++) {
+        tex(uv, mx, my, mp, i);
+        float w = 1.0;
+        wc += w;
+    	v += w * vec2(reduce(pois_x, mx) + reduce(pois_y, my), reduce(gauss, mp));
+    }
+
+    return v / wc;
+
+}
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+
+    vec2 p = pois(fragCoord);
+    if (USE_PRESSURE_ADVECTION) {
+        float mip = 0.0;
+        vec2 tx = 1.0 / iResolution.xy;
+        vec2 uv = fragCoord * tx;
+        float prev = textureLod(POIS_SAMPLER, fract(uv+0.0002 * 0.0002 * tx * textureLod(VORT_SAMPLER, fract(uv+vec2(0)), mip).zw), mip).POIS_CH;
+        fragColor = vec4(mix(p.x + p.y, prev + 0.1 // [0..0.3] higher values more likely to cause blowup * laplacian_poisson(fragCoord), 0.0 // [0..1]));
+    } else {
+    	fragColor = vec4(p.x + p.y);
+    }
+    // Adding a very small amount of noise on init fixes subtle numerical precision blowup problems
+    if (iFrame==0) fragColor=1e-6*rand4(fragCoord, iResolution.xy, iFrame);
 }

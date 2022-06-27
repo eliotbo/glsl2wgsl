@@ -27,6 +27,7 @@ pub mod insert_new_arg_vars;
 pub mod nom_helpers;
 pub mod parse_func_defines;
 pub mod replace_defines;
+pub mod replace_defs;
 pub mod replace_inouts;
 pub mod replace_main;
 pub mod replace_mod;
@@ -36,6 +37,7 @@ pub mod replace_unis;
 use insert_new_arg_vars::add_var_to_reassigned_args;
 use parse_func_defines::*;
 use replace_defines::*;
+use replace_defs::defs_parser;
 use replace_inouts::{replace_inouts, search_and_replace_void};
 use replace_mod::replace_all_mods;
 use replace_texel_fetch::replace_all_texture_and_texel_fetch;
@@ -58,9 +60,14 @@ extern "C" {
 pub fn greet(_v: &str) {}
 
 pub fn preprocessing(i: &str) -> ParserResult<String> {
-    // let mut buf = "".to_string();
+    let mut buf = "".to_string();
 
-    let removed_comments2: &str = &i
+    if let Ok((_rest, replaced_defs)) = defs_parser(i) {
+        buf = replaced_defs;
+        println!("replaced_defines: {:?}", buf);
+    }
+
+    let removed_comments2: &str = &buf
         .lines()
         .map(move |x| {
             if let Some((y, _)) = x.split_once("//") {
@@ -184,12 +191,17 @@ pub fn do_parse(x: String) -> String {
             Err(err) => {
                 let span = err.span();
                 let fragment = *span.fragment();
+                let mut lines = fragment.lines();
 
                 /////////////// begin formatting error message //////////////////////////////////////
-                let buggy_line = if let Some(line) = fragment.lines().next() {
-                    line
+                let buggy_line = if let Some(line1) = lines.next() {
+                    if let Some(line2) = lines.next() {
+                        "\n".to_string() + line1 + "\n" + line2
+                    } else {
+                        line1.to_string()
+                    }
                 } else {
-                    "Error within error: there is no line to be parsed."
+                    "Error within error: there is no line to be parsed.".to_string()
                 }
                 .to_string();
 

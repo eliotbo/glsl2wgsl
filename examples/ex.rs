@@ -33,18 +33,16 @@ use std::fs;
 
 // 3: take all lines into account when reporting the line number in errors
 // 5. clamp(sum, 0., 1.); // where  sum is a vec2
+// 6. #define BOOLVAR -> let BOOLVAR = true;
+//    #ifdef BOOLVAR -> if BOOLVAR {
+//    #else -> } else {
+//    #endif -> }
 
 const ONE_MOD: &str = "mod(g, q);
 a + mod(asdfas, rtefg(dd));";
 
-const MOD: &str = "
-void main()  {
-	float q = 2
-    // if (w) { q = 1; } else { q = 4; };
-    q = w?1:4;
-}
-
-
+const DEFINES_FUNC: &str = "#define SOME
+// #define OTHER
 ";
 
 fn main() {
@@ -54,7 +52,7 @@ fn main() {
     // let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
 
     // let buf = do_parse(LET2VAR_SHORT.to_string());
-    let buf = do_parse(MOD.to_string());
+    let buf = do_parse(DEFINES_FUNC.to_string());
 
     // let buf = parse_var_and_type(MAIN_WGSL).unwrap().1;
     // let ret = replace_all_mods(MOD);
