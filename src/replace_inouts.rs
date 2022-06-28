@@ -48,7 +48,7 @@ pub fn search_and_replace_void(i: &str) -> ParserResult<String> {
 
 pub fn check_inout_arg(i: &str) -> ParserResult<String> {
     map(
-        preceded(alt((tag("inout "), tag("out "))), anychar_underscore),
+        preceded(alt((tag("inout "), tag("out "))), anychar_underscore_dot),
         |x| x.to_string(),
     )(i)
 }

@@ -10,6 +10,7 @@ use glsl2wgsl::parser::Parse;
 use glsl2wgsl::insert_new_arg_vars::*;
 use glsl2wgsl::parse_func_defines::*;
 use glsl2wgsl::replace_defines::*;
+use glsl2wgsl::replace_defs::*;
 use glsl2wgsl::replace_inouts::*;
 use glsl2wgsl::replace_main::*;
 use glsl2wgsl::replace_mod::*;
@@ -41,9 +42,25 @@ use std::fs;
 const ONE_MOD: &str = "mod(g, q);
 a + mod(asdfas, rtefg(dd));";
 
-const DEFINES_FUNC: &str = "#define SOME
-// #define OTHER
-";
+const DEFINES_FUNC: &str = " 
+void main() {
+    #ifdef SOME_VAR
+        t = 1;
+    #else 
+        t = 2;
+    #endif
+}";
+
+const COND: &str = "
+void main() {
+  if (w) {
+    if (w) {
+      return true;
+    }
+  } else {
+    return false;
+  }
+}";
 
 fn main() {
     // // // println!("replaced_defines: {:?}", replaced_defines);
@@ -51,8 +68,8 @@ fn main() {
     // // To print the abstract syntax tree, uncomment the following line
     // let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
 
-    // let buf = do_parse(LET2VAR_SHORT.to_string());
     let buf = do_parse(DEFINES_FUNC.to_string());
+    // let buf = ifdefs_parser(DEFINES_FUNC).unwrap().1;
 
     // let buf = parse_var_and_type(MAIN_WGSL).unwrap().1;
     // let ret = replace_all_mods(MOD);

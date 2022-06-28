@@ -37,7 +37,7 @@ pub mod replace_unis;
 use insert_new_arg_vars::add_var_to_reassigned_args;
 use parse_func_defines::*;
 use replace_defines::*;
-use replace_defs::defs_parser;
+use replace_defs::{defs_parser, ifdefs_parser};
 use replace_inouts::{replace_inouts, search_and_replace_void};
 use replace_mod::replace_all_mods;
 use replace_texel_fetch::replace_all_texture_and_texel_fetch;
@@ -67,7 +67,7 @@ pub fn preprocessing(i: &str) -> ParserResult<String> {
         println!("replaced_defines: {:?}", buf);
     }
 
-    let removed_comments2: &str = &buf
+    buf = buf
         .lines()
         .map(move |x| {
             if let Some((y, _)) = x.split_once("//") {
@@ -78,34 +78,34 @@ pub fn preprocessing(i: &str) -> ParserResult<String> {
         })
         .collect::<String>();
 
-    // println!("removed_comments2 : {:?}", removed_comments2);
-
-    // if let Ok((_, replaced_defines_func)) = func_definition_parser(removed_comments2) {
-    //     buf = replaced_defines_func;
-    // }
-
-    // if let Ok((_, defined)) = func_definition_parser(&buf) {
-    //     buf = defined;
-    // }
-
-    // success(buf)("")
+    // need help simplifying this.
+    if let Ok((_rest, replaced_ifdefs)) = ifdefs_parser(&buf) {
+        buf = replaced_ifdefs;
+    } else {
+        let vek = VerboseErrorKind::Context("Could not replace #ifdefs statements");
+        let _ve = VerboseError {
+            errors: vec![(i, vek)],
+        };
+        return Err(nom::Err::Failure(_ve));
+    }
 
     // need help simplifying this.
-    if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&removed_comments2) {
-        //
-        if let Ok((_rest2, replaced_defines)) = definition_parser(replaced_defines_func.as_str()) {
-            return success(replaced_defines)("");
-        } else {
-            let vek = VerboseErrorKind::Context("Could not properly parse the #define functions");
-            let _ve = VerboseError {
-                errors: vec![("", vek)],
-            };
-            Err(nom::Err::Failure(_ve))
-        }
+    if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&buf) {
+        buf = replaced_defines_func;
     } else {
         let vek = VerboseErrorKind::Context("Could not properly remove comments");
         let _ve = VerboseError {
             errors: vec![(i, vek)],
+        };
+        return Err(nom::Err::Failure(_ve));
+    }
+
+    if let Ok((_rest2, replaced_defines)) = definition_parser(&buf) {
+        return success(replaced_defines)("");
+    } else {
+        let vek = VerboseErrorKind::Context("Could not properly parse the #define functions");
+        let _ve = VerboseError {
+            errors: vec![("", vek)],
         };
         Err(nom::Err::Failure(_ve))
     }

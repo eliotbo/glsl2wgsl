@@ -1,2 +1,8 @@
-let SOME: bool = true;
-let OTHER: bool = false;
+fn main()  {
+	if (SOME_VAR) {
+		t = 1;
+	} else { 
+		t = 2;
+	}
+} 
+

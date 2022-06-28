@@ -45,7 +45,7 @@ pub fn find_and_replace_single_define(
             anychar,
             pair(
                 count(none_of(ALPHANUM_UNDER), 1),
-                verify(anychar_underscore, |x: &str| x.to_string() == name),
+                verify(anychar_underscore_dot, |x: &str| x.to_string() == name),
             ),
         ))
         .and(rest_of_script),

@@ -35,7 +35,7 @@ pub fn replace_main(i: &str) -> ParserResult<String> {
 
 pub fn parse_var_and_type(i: &str) -> ParserResult<String> {
     map(
-        separated_pair(anychar_underscore, tag(": "), type_argument1),
+        separated_pair(anychar_underscore_dot, tag(": "), type_argument1),
         |s| s.0,
     )(i)
 }

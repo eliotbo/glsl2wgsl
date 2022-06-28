@@ -22,7 +22,7 @@ pub fn erase_one_define(i: &str) -> ParserResult<String> {
             anychar,
             preceded(
                 tag("#define ")
-                    .and(anychar_underscore)
+                    .and(anychar_underscore_dot)
                     .and(function_call_args),
                 many_till(anychar, tag("\n")),
             ),
@@ -47,7 +47,7 @@ pub fn erase_all_func_defines(i: &str) -> ParserResult<String> {
 
 pub fn replace_define_tag(i: &str) -> ParserResult<(String, Vec<String>)> {
     map(
-        preceded(tag("#define").and(space1), anychar_underscore).and(function_call_args),
+        preceded(tag("#define").and(space1), anychar_underscore_dot).and(function_call_args),
         |x| {
             // println!("x: {:?}", x);
             x
@@ -108,7 +108,7 @@ pub fn get_all_define_funcs(i: &str) -> ParserResult<Vec<DefineFunc>> {
 }
 
 pub fn detect_identifier_as_arg(i: &str, name: String) -> ParserResult<String> {
-    verify(anychar_underscore, |x: &str| x.to_string() == name)(i)
+    verify(anychar_underscore_dot, |x: &str| x.to_string() == name)(i)
 }
 
 // finds an instance of the #define function in the code body and replaces it
@@ -122,7 +122,7 @@ pub fn find_and_replace_single_define_func(i: &str, def: DefineFunc) -> ParserRe
                     // the character before the name of the function should not be
                     // part of the name
                     count(none_of(ALPHANUM_UNDER), 1),
-                    verify(anychar_underscore, |x: &str| {
+                    verify(anychar_underscore_dot, |x: &str| {
                         //
 
                         x.to_string() == def.name

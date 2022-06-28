@@ -204,7 +204,6 @@ fn if_else() {
 	if (r.x > d.x) {
 		r = d;
 	} else { 
-
 		r = 1.;
 		a = 55;
 	}
@@ -324,7 +323,6 @@ void main() {
 			return true;
 		}
 	} else { 
-
 		return false;
 	}
 } 
@@ -345,6 +343,30 @@ let OTHER: bool = false;
 ";
 
     assert_eq!(&do_parse(DEFS.to_string()), b);
+}
+
+#[test]
+fn ifdefs() {
+    const IFDEFS: &str = " 
+void main() {
+    #ifdef SOME_VAR
+        t = 1;
+    #else 
+        t = 2;
+    #endif
+}";
+
+    let b = "fn main()  {
+	if (SOME_VAR) {
+		t = 1;
+	} else { 
+		t = 2;
+	}
+} 
+
+";
+
+    assert_eq!(&do_parse(IFDEFS.to_string()), b);
 }
 
 #[test]

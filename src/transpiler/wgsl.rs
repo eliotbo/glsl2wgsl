@@ -1877,7 +1877,7 @@ pub fn show_selection_rest_statement<F>(
         syntax::SelectionRestStatement::Else(ref if_st, ref else_st) => {
             show_statement(f, if_st, i, is_single_line);
             indent(f, i);
-            let _ = f.write_str("} else { \n");
+            let _ = f.write_str("} else { ");
             show_statement(f, else_st, i, is_single_line);
             indent(f, i);
             let _ = f.write_str("}\n");

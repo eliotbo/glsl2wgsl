@@ -295,6 +295,10 @@ pub fn identifier(input: &str) -> ParserResult<&str> {
     )(input)
 }
 
+pub fn anychar_underscore_dot(i: &str) -> ParserResult<String> {
+    map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
+}
+
 pub fn anychar_underscore(i: &str) -> ParserResult<String> {
     map(take_while1(identifier_num_pred), |v: &str| v.to_string())(i)
 }
@@ -529,7 +533,7 @@ pub fn function_call_args(i: &str) -> ParserResult<Vec<String>> {
             tag("("),
             separated_list0(
                 delimited(multispace0, char(','), multispace0),
-                anychar_underscore,
+                anychar_underscore_dot,
             ),
             tag(")"),
         ),
