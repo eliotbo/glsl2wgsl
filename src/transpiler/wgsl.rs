@@ -20,6 +20,8 @@ trait HasPrecedence {
     fn precedence(&self) -> u32;
 }
 
+const VOID: syntax::TypeSpecifierNonArray = syntax::TypeSpecifierNonArray::Void;
+
 impl HasPrecedence for syntax::Expr {
     fn precedence(&self) -> u32 {
         match self {
@@ -597,7 +599,7 @@ where
             }
             syntax::ArraySpecifierDimension::ExplicitlySized(ref e) => {
                 let _ = f.write_str("[");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str("]");
             }
         }
@@ -621,7 +623,7 @@ pub fn show_array_spec_wgsl<F>(
                 let _ = f.write_str("array<");
                 show_type_specifier_non_array(f, t);
                 let _ = f.write_str(",");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(">");
             }
         }
@@ -637,13 +639,13 @@ where
         match *dimension {
             // TODO
             syntax::ArraySpecifierDimension::Unsized => {
-                show_expr(f, &e1);
+                show_expr(f, &e1, &VOID);
                 let _ = f.write_str("[?]");
             }
             syntax::ArraySpecifierDimension::ExplicitlySized(ref e2) => {
-                show_expr(f, &e1);
+                show_expr(f, &e1, &VOID);
                 let _ = f.write_str("[");
-                show_expr(f, &e2);
+                show_expr(f, &e2, &VOID);
                 let _ = f.write_str("]");
             }
         }
@@ -664,9 +666,9 @@ where
             syntax::ArraySpecifierDimension::ExplicitlySized(ref e2) => {
                 let _ = f.write_str("array<");
                 // show_type_specifier_non_array(f, t);
-                show_expr(f, &e1);
+                show_expr(f, &e1, &VOID);
                 let _ = f.write_str(",");
-                show_expr(f, &e2);
+                show_expr(f, &e2, &VOID);
                 let _ = f.write_str(">");
             }
         }
@@ -826,7 +828,7 @@ where
     match *l {
         syntax::LayoutQualifierSpec::Identifier(ref i, Some(ref e)) => {
             let _ = write!(f, "{} = ", i);
-            show_expr(f, &e);
+            show_expr(f, &e, &VOID);
         }
         syntax::LayoutQualifierSpec::Identifier(ref i, None) => show_identifier(f, &i),
         syntax::LayoutQualifierSpec::Shared => {
@@ -909,22 +911,155 @@ pub fn is_swizzle(s: &str) -> bool {
     xyzw2 || xyzw3 || xyzw4 || rgba2 || rgba3 || rgba4
 }
 
-pub fn show_expr<F>(f: &mut F, expr: &syntax::Expr)
+pub fn show_func_args<F>(f: &mut F, args: &Vec<syntax::Expr>, do_convert_to_float: bool)
+where
+    F: Write,
+{
+    let _ = f.write_str("(");
+    if !args.is_empty() {
+        let mut args_iter = args.iter();
+        let first = args_iter.next().unwrap();
+
+        if do_convert_to_float {
+            let new_first = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
+            show_expr(f, &new_first, &VOID);
+        } else {
+            show_expr(f, &first, &VOID);
+        }
+
+        for e in args_iter {
+            let _ = f.write_str(", ");
+
+            if do_convert_to_float {
+                let new_e = convert_to_float(e.clone(), &TypeSpecifierNonArray::Float);
+                show_expr(f, &new_e, &VOID);
+            } else {
+                show_expr(f, e, &VOID);
+            }
+        }
+    }
+    let _ = f.write_str(")");
+}
+
+pub fn show_func_args_clamp<F>(
+    f: &mut F,
+    args: &Vec<syntax::Expr>,
+    do_convert_to_float: bool,
+    ty: &TypeSpecifierNonArray,
+) where
+    F: Write,
+{
+    let _ = f.write_str("(");
+    if !args.is_empty() {
+        let mut args_iter = args.iter();
+        let first = args_iter.next().unwrap();
+
+        if do_convert_to_float {
+            let new_first = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
+            show_expr(f, &new_first, &VOID);
+        } else {
+            show_expr(f, &first, &VOID);
+        }
+
+        for e in args_iter {
+            let _ = f.write_str(", ");
+
+            if do_convert_to_float {
+                let new_e = convert_to_float(e.clone(), &TypeSpecifierNonArray::Float);
+                show_expr(f, &new_e, ty);
+            } else {
+                println!("not: {:?}", ty);
+                show_expr(f, e, ty);
+            }
+        }
+    }
+    let _ = f.write_str(")");
+}
+
+pub fn show_expr<F>(f: &mut F, expr: &syntax::Expr, ty: &syntax::TypeSpecifierNonArray)
 where
     F: Write,
 {
     match *expr {
         syntax::Expr::Variable(ref i) => show_identifier(f, &i),
-        syntax::Expr::IntConst(ref x) => {
-            let _ = write!(f, "{}", x);
-        }
-        syntax::Expr::UIntConst(ref x) => {
-            let _ = write!(f, "{}u", x);
-        }
+
+        syntax::Expr::FloatConst(ref x) => match ty {
+            // turns the FloatConst argument of a function into its vector equivalent
+            // example: vec2 x = clamp(z, 0.0, 1.0); ---> let x: vec2<f32> = clamp(z, vec2<f32>(0.0), vec2<f32>(1.0));
+            syntax::TypeSpecifierNonArray::TypeName(syntax::TypeName(ref type_name)) => {
+                match type_name.as_str() {
+                    v @ "vec2<f32>" | v @ "vec3<f32>" | v @ "vec4<f32>" => {
+                        let _ = f.write_str(v);
+                        let _ = f.write_str("(");
+                        show_float(f, *x);
+                        let _ = f.write_str(")");
+                    }
+                    _ => {
+                        show_float(f, *x);
+                    }
+                }
+            }
+
+            _ => {
+                show_float(f, *x);
+            }
+        },
+
+        syntax::Expr::IntConst(ref x) => match ty {
+            syntax::TypeSpecifierNonArray::TypeName(syntax::TypeName(ref type_name)) => {
+                match type_name.as_str() {
+                    v @ "vec2<i32>" | v @ "vec3<i32>" | v @ "vec4<i32>" => {
+                        let _ = f.write_str(v);
+                        let _ = f.write_str("(");
+                        let _ = write!(f, "{}", x);
+                        let _ = f.write_str(")");
+                    }
+
+                    v @ "vec2<f32>" | v @ "vec3<f32>" | v @ "vec4<f32>" => {
+                        let _ = f.write_str(v);
+                        let _ = f.write_str("(");
+                        show_float(f, *x as f32);
+                        let _ = f.write_str(")");
+                    }
+                    _ => {
+                        let _ = write!(f, "{}", x);
+                    }
+                }
+            }
+
+            _ => {
+                let _ = write!(f, "{}", x);
+            }
+        },
+        syntax::Expr::UIntConst(ref x) => match ty {
+            syntax::TypeSpecifierNonArray::TypeName(syntax::TypeName(ref type_name)) => {
+                match type_name.as_str() {
+                    v @ "vec2<f32>" | v @ "vec3<f32>" | v @ "vec4<f32>" => {
+                        let _ = f.write_str(v);
+                        let _ = f.write_str("(");
+                        show_float(f, *x as f32);
+                        let _ = f.write_str(")");
+                    }
+
+                    v @ "vec2<u32>" | v @ "vec3<u32>" | v @ "vec4<u32>" => {
+                        let _ = f.write_str(v);
+                        let _ = f.write_str("(");
+                        let _ = write!(f, "{}u", x);
+                        let _ = f.write_str(")");
+                    }
+                    _ => {
+                        let _ = write!(f, "{}u", x);
+                    }
+                }
+            }
+            _ => {
+                let _ = write!(f, "{}u", x);
+            }
+        },
         syntax::Expr::BoolConst(ref x) => {
             let _ = write!(f, "{}", x);
         }
-        syntax::Expr::FloatConst(ref x) => show_float(f, *x),
+
         syntax::Expr::DoubleConst(ref x) => show_double(f, *x),
         syntax::Expr::Unary(ref op, ref e) => {
             // Note: all unary ops are right-to-left associative
@@ -932,39 +1067,39 @@ where
 
             if e.precedence() > op.precedence() {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             } else if let syntax::Expr::Unary(eop, _) = &**e {
                 // Prevent double-unary plus/minus turning into inc/dec
                 if eop == op && (*eop == syntax::UnaryOp::Add || *eop == syntax::UnaryOp::Minus) {
                     let _ = f.write_str("(");
-                    show_expr(f, &e);
+                    show_expr(f, &e, &VOID);
                     let _ = f.write_str(")");
                 } else {
-                    show_expr(f, &e);
+                    show_expr(f, &e, &VOID);
                 }
             } else {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             }
         }
         syntax::Expr::Binary(ref op, ref l, ref r) => {
             // Note: all binary ops are left-to-right associative (<= for left part)
 
             if l.precedence() <= op.precedence() {
-                show_expr(f, &l);
+                show_expr(f, &l, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &l);
+                show_expr(f, &l, &VOID);
                 let _ = f.write_str(")");
             }
 
             show_binary_op(f, &op);
 
             if r.precedence() < op.precedence() {
-                show_expr(f, &r);
+                show_expr(f, &r, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &r);
+                show_expr(f, &r, &VOID);
                 let _ = f.write_str(")");
             }
         }
@@ -974,22 +1109,22 @@ where
             let _ = f.write_str("if (");
 
             if c.precedence() < expr.precedence() {
-                show_expr(f, &c);
+                show_expr(f, &c, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &c);
+                show_expr(f, &c, &VOID);
                 let _ = f.write_str(")");
             }
             let _ = f.write_str(") { ");
 
             // let _ = f.write_str(" ? ");
-            show_expr(f, &s);
+            show_expr(f, &s, &VOID);
             let _ = f.write_str("; } else { ");
             if e.precedence() <= expr.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
             let _ = f.write_str("; }");
@@ -1001,10 +1136,10 @@ where
             let _ = f.write_str("if (");
 
             if c.precedence() < expr.precedence() {
-                show_expr(f, &c);
+                show_expr(f, &c, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &c);
+                show_expr(f, &c, &VOID);
                 let _ = f.write_str(")");
             }
             let _ = f.write_str(") { ");
@@ -1012,15 +1147,15 @@ where
             let _ = f.write_str(&i.0);
             let _ = f.write_str(" = ");
             // let _ = f.write_str(" ? ");
-            show_expr(f, &s);
+            show_expr(f, &s, &VOID);
             let _ = f.write_str("; } else { ");
             let _ = f.write_str(&i.0);
             let _ = f.write_str(" = ");
             if e.precedence() <= expr.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
             let _ = f.write_str("; }");
@@ -1069,11 +1204,11 @@ where
                     if let syntax::Expr::Bracket(ref array_expr, ref array_spec) = *v {
                         show_bracket_wgsl(f, &array_spec, &array_expr);
                     } else {
-                        show_expr(f, &v);
+                        show_expr(f, &v, &VOID);
                     }
                 } else {
                     let _ = f.write_str("(");
-                    show_expr(f, &v);
+                    show_expr(f, &v, &VOID);
                     let _ = f.write_str(")");
                 }
             }
@@ -1085,7 +1220,7 @@ where
                 let _ = f.write_str("= ");
             } else {
                 let _ = f.write_str("= ");
-                show_expr(f, &v);
+                show_expr(f, &v, &VOID);
                 let _ = f.write_str(" ");
                 show_assignment_op(f, &op);
                 let _ = f.write_str(" ");
@@ -1094,10 +1229,10 @@ where
             }
 
             if e.precedence() <= op.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
 
@@ -1153,46 +1288,26 @@ where
             match *fun {
                 syntax::FunIdentifier::Identifier(ref n) => {
                     do_convert_to_float = is_float_str(&n.0);
-                    show_identifier(f, &n)
-                }
-                syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e),
-            }
+                    show_identifier(f, &n);
+                    if n.0 == "clamp" {
+                        show_func_args_clamp(f, args, do_convert_to_float, ty);
 
-            let _ = f.write_str("(");
-
-            if !args.is_empty() {
-                let mut args_iter = args.iter();
-                let first = args_iter.next().unwrap();
-
-                if do_convert_to_float {
-                    let new_first = convert_to_float(first.clone(), &TypeSpecifierNonArray::Float);
-                    show_expr(f, &new_first);
-                } else {
-                    show_expr(f, &first);
-                }
-
-                for e in args_iter {
-                    let _ = f.write_str(", ");
-
-                    if do_convert_to_float {
-                        let new_e = convert_to_float(e.clone(), &TypeSpecifierNonArray::Float);
-                        show_expr(f, &new_e);
-                    } else {
-                        show_expr(f, e);
+                        return ();
                     }
                 }
+                syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e, &VOID),
             }
 
-            let _ = f.write_str(")");
+            show_func_args(f, args, do_convert_to_float);
         }
         syntax::Expr::Dot(ref e, ref i) => {
             // Note: dot is left-to-right associative
 
             if e.precedence() <= expr.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
             let _ = f.write_str(".");
@@ -1202,15 +1317,15 @@ where
             // Note: post-increment is right-to-left associative
 
             if e.precedence() < expr.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
 
             let _ = f.write_str(" = ");
-            show_expr(f, &e);
+            show_expr(f, &e, &VOID);
             let _ = f.write_str(" + 1");
 
             // let _ = f.write_str("++");
@@ -1219,36 +1334,36 @@ where
             // Note: post-decrement is right-to-left associative
 
             if e.precedence() < expr.precedence() {
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &e);
+                show_expr(f, &e, &VOID);
                 let _ = f.write_str(")");
             }
 
             // let _ = f.write_str("--");
             let _ = f.write_str(" = ");
-            show_expr(f, &e);
+            show_expr(f, &e, &VOID);
             let _ = f.write_str(" - 1");
         }
         syntax::Expr::Comma(ref a, ref b) => {
             // Note: comma is left-to-right associative
 
             if a.precedence() <= expr.precedence() {
-                show_expr(f, &a);
+                show_expr(f, &a, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &a);
+                show_expr(f, &a, &VOID);
                 let _ = f.write_str(")");
             }
 
             let _ = f.write_str(", ");
 
             if b.precedence() < expr.precedence() {
-                show_expr(f, &b);
+                show_expr(f, &b, &VOID);
             } else {
                 let _ = f.write_str("(");
-                show_expr(f, &b);
+                show_expr(f, &b, &VOID);
                 let _ = f.write_str(")");
             }
         }
@@ -1276,12 +1391,12 @@ where
     match *op {
         syntax::UnaryOp::Inc => {
             let _ = f.write_str(" = ");
-            show_expr(f, &e);
+            show_expr(f, &e, &VOID);
             let _ = f.write_str(" + 1");
         }
         syntax::UnaryOp::Dec => {
             let _ = f.write_str(" = ");
-            show_expr(f, &e);
+            show_expr(f, &e, &VOID);
             let _ = f.write_str(" - 1");
         }
         syntax::UnaryOp::Add => {
@@ -1420,7 +1535,7 @@ where
 {
     match *i {
         syntax::FunIdentifier::Identifier(ref n) => show_identifier(f, &n),
-        syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e),
+        syntax::FunIdentifier::Expr(ref e) => show_expr(f, &*e, &VOID),
     }
 }
 
@@ -1715,7 +1830,7 @@ where
     match *i {
         syntax::Initializer::Simple(ref e) => {
             let new_exp = convert_to_float(*e.clone(), ty);
-            show_expr(f, &new_exp);
+            show_expr(f, &new_exp, ty);
         }
 
         syntax::Initializer::List(ref list) => {
@@ -1827,7 +1942,7 @@ pub fn show_expression_statement<F>(
         } else {
             let _ = f.write_str(" ");
         }
-        show_expr(f, e);
+        show_expr(f, e, &VOID);
     }
 
     let _ = f.write_str(";");
@@ -1849,7 +1964,7 @@ where
 
     indent(f, i);
     let _ = f.write_str("if (");
-    show_expr(f, &sst.cond);
+    show_expr(f, &sst.cond, &VOID);
     let _ = f.write_str(") {");
 
     show_selection_rest_statement(f, &sst.rest, i, is_single_line);
@@ -1891,7 +2006,7 @@ where
 {
     indent(f, i);
     let _ = f.write_str("switch (");
-    show_expr(f, &sst.head);
+    show_expr(f, &sst.head, &VOID);
     let _ = f.write_str(") {\n");
 
     for st in &sst.body {
@@ -1909,7 +2024,7 @@ where
     match *cl {
         syntax::CaseLabel::Case(ref e) => {
             let _ = f.write_str("case ");
-            show_expr(f, e);
+            show_expr(f, e, &VOID);
             let _ = f.write_str(":\n");
         }
         syntax::CaseLabel::Def => {
@@ -1936,7 +2051,7 @@ where
             let _ = f.write_str("do ");
             show_statement(f, body, i, false);
             let _ = f.write_str(" while (");
-            show_expr(f, cond);
+            show_expr(f, cond, &VOID);
             let _ = f.write_str(")\n");
         }
         syntax::IterationStatement::For(ref init, ref rest, ref body) => {
@@ -1965,7 +2080,7 @@ where
     match *c {
         syntax::Condition::Expr(ref e) => {
             let e2 = convert_to_float(*e.clone(), &ty);
-            show_expr(f, &e2);
+            show_expr(f, &e2, &VOID);
         }
         syntax::Condition::Assignment(ref ty, ref name, ref initializer) => {
             show_fully_specified_type(f, ty);
@@ -2001,7 +2116,7 @@ pub fn show_for_init_statement<F>(
         syntax::ForInitStatement::Expression(ref expr) => {
             if let Some(ref e) = *expr {
                 let e2 = convert_to_float(e.clone(), ty);
-                show_expr(f, &e2);
+                show_expr(f, &e2, &VOID);
             }
         }
         syntax::ForInitStatement::Declaration(ref d) => {
@@ -2027,7 +2142,7 @@ pub fn show_for_rest_statement<F>(
     if let Some(ref e) = r.post_expr {
         let e2 = convert_to_float(*e.clone(), ty);
 
-        show_expr(f, &e2);
+        show_expr(f, &e2, &VOID);
     }
 }
 
@@ -2049,7 +2164,7 @@ where
         syntax::JumpStatement::Return(ref e) => {
             let _ = f.write_str("return ");
             if let Some(e) = e {
-                show_expr(f, e);
+                show_expr(f, e, &VOID);
             }
             let _ = f.write_str(";\n");
         }

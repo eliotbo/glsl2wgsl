@@ -1,8 +1,6 @@
 fn main()  {
-	if (SOME_VAR) {
-		t = 1;
-	} else { 
-		t = 2;
-	}
+	let x: vec2<f32> = clamp(v, vec2<f32>(0.), clamp(z, vec2<f32>(0.), vec2<f32>(1.)));
+	var z: vec2<f32>;
+	z = clamp(z, 0, 1);
 } 
 

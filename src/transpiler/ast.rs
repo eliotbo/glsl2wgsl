@@ -784,7 +784,9 @@ Declaration(
                 }, 
                 initializer: Some(Simple(FloatConst(0.0))) }] }))])          
 
-InitDeclaratorList { 
+TranslationUnit(NonEmpty([
+    Declaration(
+        InitDeclaratorList(InitDeclaratorList { 
     head: SingleDeclaration { 
         ty: FullySpecifiedType { 
             qualifier: None, 
@@ -795,7 +797,7 @@ InitDeclaratorList {
         initializer: None }, 
     tail: [] })), 
     
-TranslationUnit(NonEmpty([Declaration(
+    Declaration(
     InitDeclaratorList(
         InitDeclaratorList { 
             head: SingleDeclaration { 
@@ -805,4 +807,41 @@ TranslationUnit(NonEmpty([Declaration(
                 }, 
                 name: Some(Identifier("h")), 
                 array_specifier: None, 
-                initializer: Some(Simple(FloatConst(0.0))) }, tail: [] }))]))
+                initializer: Some(Simple(FloatConst(0.0))) 
+            }, 
+            tail: [] }))]))
+
+
+TranslationUnit(NonEmpty([
+    FunctionDefinition(
+        FunctionDefinition { 
+            prototype: FunctionPrototype { 
+                ty: FullySpecifiedType { 
+                    qualifier: None, 
+                    ty: TypeSpecifier { 
+                        ty: Void, 
+                        array_specifier: None } 
+                }, 
+                name: Identifier("main"), 
+                parameters: [] 
+            }, 
+            statement: CompoundStatement { 
+                statement_list: [
+                    Simple(Declaration(InitDeclaratorList(InitDeclaratorList {
+                         head: SingleDeclaration { 
+                            ty: FullySpecifiedType { 
+                                qualifier: None, 
+                                ty: TypeSpecifier { 
+                                    ty: TypeName(TypeName("vec2<f32>")), 
+                                    array_specifier: None } 
+                            }, 
+                            name: Some(Identifier("x")), 
+                            array_specifier: None, 
+                            initializer: Some(Simple(FunCall(Identifier(
+                                Identifier("clamp")), 
+                                [Variable(Identifier("v")), 
+                                FloatConst(0.0), 
+                                FloatConst(1.0)]))
+                            ) 
+                        }, 
+                        tail: [] })))] } })]))

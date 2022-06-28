@@ -34,10 +34,6 @@ use std::fs;
 
 // 3: take all lines into account when reporting the line number in errors
 // 5. clamp(sum, 0., 1.); // where  sum is a vec2
-// 6. #define BOOLVAR -> let BOOLVAR = true;
-//    #ifdef BOOLVAR -> if BOOLVAR {
-//    #else -> } else {
-//    #endif -> }
 
 const ONE_MOD: &str = "mod(g, q);
 a + mod(asdfas, rtefg(dd));";
@@ -51,24 +47,20 @@ void main() {
     #endif
 }";
 
-const COND: &str = "
+const CLAMP: &str = "
 void main() {
-  if (w) {
-    if (w) {
-      return true;
-    }
-  } else {
-    return false;
-  }
+    vec2 x = clamp(v, 0, clamp(z, 0, 1));
+    vec2 z;
+    z = clamp(z, 0, 1);
 }";
 
 fn main() {
     // // // println!("replaced_defines: {:?}", replaced_defines);
 
     // // To print the abstract syntax tree, uncomment the following line
-    // let trans = TranslationUnit::parse(Span::new(&MAT3)).unwrap();
+    let trans = TranslationUnit::parse(Span::new(&CLAMP)).unwrap();
 
-    let buf = do_parse(DEFINES_FUNC.to_string());
+    let buf = do_parse(CLAMP.to_string());
     // let buf = ifdefs_parser(DEFINES_FUNC).unwrap().1;
 
     // let buf = parse_var_and_type(MAIN_WGSL).unwrap().1;
