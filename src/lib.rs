@@ -64,7 +64,7 @@ pub fn preprocessing(i: &str) -> ParserResult<String> {
 
     if let Ok((_rest, replaced_defs)) = defs_parser(i) {
         buf = replaced_defs;
-        println!("replaced_defines: {:?}", buf);
+        // println!("replaced_defines: {:?}", buf);
     }
 
     buf = buf

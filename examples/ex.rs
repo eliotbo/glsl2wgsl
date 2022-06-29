@@ -55,18 +55,11 @@ void main() {
 }";
 
 fn main() {
-    // // // println!("replaced_defines: {:?}", replaced_defines);
-
     // // To print the abstract syntax tree, uncomment the following line
     let trans = TranslationUnit::parse(Span::new(&CLAMP)).unwrap();
 
     let buf = do_parse(CLAMP.to_string());
     // let buf = ifdefs_parser(DEFINES_FUNC).unwrap().1;
-
-    // let buf = parse_var_and_type(MAIN_WGSL).unwrap().1;
-    // let ret = replace_all_mods(MOD);
-    // println!("{:?}", ret);
-    // let buf = ret.unwrap().1;
 
     fs::write("./parsed_file.txt", &buf).expect("Unable to write file");
 

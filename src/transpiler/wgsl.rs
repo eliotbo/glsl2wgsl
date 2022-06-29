@@ -968,7 +968,7 @@ pub fn show_func_args_clamp<F>(
                 let new_e = convert_to_float(e.clone(), &TypeSpecifierNonArray::Float);
                 show_expr(f, &new_e, ty);
             } else {
-                println!("not: {:?}", ty);
+                // println!("not: {:?}", ty);
                 show_expr(f, e, ty);
             }
         }

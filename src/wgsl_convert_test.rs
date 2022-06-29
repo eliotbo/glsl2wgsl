@@ -702,3 +702,23 @@ fn replace_mod_test() {
 
     assert_eq!(&do_parse(MOD.to_string()), b);
 }
+
+#[test]
+fn clamp_convert() {
+    const CLAMP: &str = "
+void main() {
+    vec2 x = clamp(v, 0, clamp(z, 0, 1));
+    vec2 z;
+    z = clamp(z, 0, 1);
+}";
+
+    let b = "fn main()  {
+	let x: vec2<f32> = clamp(v, vec2<f32>(0.), clamp(z, vec2<f32>(0.), vec2<f32>(1.)));
+	var z: vec2<f32>;
+	z = clamp(z, 0, 1);
+} 
+
+";
+
+    assert_eq!(&do_parse(CLAMP.to_string()), b);
+}
