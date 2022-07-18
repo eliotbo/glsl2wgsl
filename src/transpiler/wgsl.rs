@@ -1241,9 +1241,17 @@ where
             }
 
             if swizzled {
-                swizzle.chars().for_each(|c| {
+                swizzle.chars().enumerate().for_each(|(index, c)| {
                     let _ = f.write_str(";\n");
                     indent(f, 1);
+
+                    let index_str = match index {
+                        0 => "x",
+                        1 => "y",
+                        2 => "z",
+                        3 => "w",
+                        _ => panic!("Invalid swizzle index"),
+                    };
 
                     let _ = f.write_str(&left_variable);
                     let _ = f.write_str(".");
@@ -1253,7 +1261,7 @@ where
 
                     let _ = f.write_str(&swizzle);
                     let _ = f.write_str(".");
-                    let _ = f.write_str(&c.to_string());
+                    let _ = f.write_str(index_str);
                 });
                 // let _ = f.write_str(.next().collect::<&str>());
             }
@@ -1276,7 +1284,8 @@ where
             //   let _ = f.write_str(")");
             // }
             // show_array_spec_wgsl(f, &a);
-            show_array_spec_value_wgsl(f, &a, &e);
+            // show_array_spec_value_wgsl(f, &a, &e);
+            show_bracket_wgsl(f, &a, &e);
             // }
         }
 

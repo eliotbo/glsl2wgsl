@@ -33,37 +33,21 @@ use std::fs;
 // TODO: fix the newline for statements
 
 // 3: take all lines into account when reporting the line number in errors
-// 5. clamp(sum, 0., 1.); // where  sum is a vec2
 
-const ONE_MOD: &str = "mod(g, q);
-a + mod(asdfas, rtefg(dd));";
+// 7.  n  = n + 1n
 
-const DEFINES_FUNC: &str = " 
-void main() {
-    #ifdef SOME_VAR
-        t = 1;
-    #else 
-        t = 2;
-    #endif
-}";
-
-const CLAMP: &str = "
-void main() {
-    vec2 x = clamp(v, 0, clamp(z, 0, 1));
-    vec2 z;
-    z = clamp(z, 0, 1);
-}";
+const CALLED_ARRAY: &str = "fn main() {  f32 a[5] = b[3]; }";
 
 fn main() {
     // // To print the abstract syntax tree, uncomment the following line
-    let trans = TranslationUnit::parse(Span::new(&CLAMP)).unwrap();
+    let trans = TranslationUnit::parse(Span::new(&CALLED_ARRAY)).unwrap();
 
-    let buf = do_parse(CLAMP.to_string());
+    let buf = do_parse(CALLED_ARRAY.to_string());
     // let buf = ifdefs_parser(DEFINES_FUNC).unwrap().1;
 
     fs::write("./parsed_file.txt", &buf).expect("Unable to write file");
 
-    // println!("{:?}", trans);
+    println!("{:?}", trans);
     // println!("{:?}", buf);
 }
 

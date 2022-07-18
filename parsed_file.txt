@@ -1,6 +1,4 @@
-fn main()  {
-	let x: vec2<f32> = clamp(v, vec2<f32>(0.), clamp(z, vec2<f32>(0.), vec2<f32>(1.)));
-	var z: vec2<f32>;
-	z = clamp(z, 0, 1);
+fn main() -> fn {
+	let a: array<f32,5> = b[3];
 } 
 

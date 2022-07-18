@@ -259,12 +259,15 @@ float intensity;
 
 #[test]
 fn array() {
-    const ARRAY: &str = "const float yaa[2] = float[2](5.5, 8.7);";
+    const CALLED_ARRAY: &str = "fn main() {  f32 a[5] = b[3]; }";
 
-    let b = "let yaa: array<f32,2> = array<f32,2>(5.5, 8.7);
+    let b = "fn main() -> fn {
+	let a: array<f32,5> = b[3];
+} 
+
 ";
 
-    assert_eq!(&do_parse(ARRAY.to_string()), b);
+    assert_eq!(&do_parse(CALLED_ARRAY.to_string()), b);
 }
 
 #[test]
@@ -389,24 +392,22 @@ float func(float x) {
     assert_eq!(&do_parse(DEFINE.to_string()), b);
 }
 
+// swizzling is handled in the show_expr() function of wgsl.rs
+// next to the matched pattern "syntax::Expr::Assignment(ref v2, ref op2, ref e2) =>"
 #[test]
 fn xyz() {
     const XYZ: &str = "
 
 void main() {
-  q.xy = vec2(-1, 3);
+  q.xw = vec2(-1, 3);
 
-  blah.rg += 2;
 }";
+
     let b = "fn main()  {
-	var qxy = q.xy;
-	qxy = vec2<f32>(-1., 3.);
-	q.x = qxy.x;
-	q.y = qxy.y;
-	var blahrg = blah.rg;
-	blahrg = blah.rg + (2);
-	blah.r = blahrg.r;
-	blah.g = blahrg.g;
+	var qxw = q.xw;
+	qxw = vec2<f32>(-1., 3.);
+	q.x = qxw.x;
+	q.w = qxw.y;
 } 
 
 ";
@@ -536,11 +537,14 @@ void func(float a, inout vec4 P)
    float a2 = P.w;
 }
 
-float func2(float c, inout vec4 wert, inout float a)
+float func2( inout vec4 wert, vec3 c, inout float a)
 {
  wert = 56;
  a = vec2(1,1);
- c = 23;
+ for (int i = 0; i < octaveNum; i++) {
+    acc += vec2(noise(c), noise(p2 + vec3(0,0,10))) * amp;
+    c = 23;
+ }
 }";
 
     let b = "fn func(a: f32, P: ptr<function, vec4<f32>>)  {
@@ -548,11 +552,16 @@ float func2(float c, inout vec4 wert, inout float a)
 	let a2: f32 = (*P).w;
 } 
 
-fn func2(c: f32, wert: ptr<function, vec4<f32>>, a: ptr<function, f32>) -> f32 {
+fn func2(wert: ptr<function, vec4<f32>>, c: vec3<f32>, a: ptr<function, f32>) -> f32 {
 	var c_var = c;
 	(*wert) = 56;
 	(*a) = vec2<f32>(1., 1.);
-	c_var = 23;
+
+	for (var i: i32 = 0; i < octaveNum; i = i + 1) {
+		acc = acc + (vec2<f32>(noise(c_var), noise(p2 + vec3<f32>(0., 0., 10.))) * amp);
+		c_var = 23;
+	}
+
 } 
 
 ";
@@ -566,12 +575,14 @@ fn texel_fetch() {
 void main() {
    vec4 wqe = texelFetch(ch0, q);
    vec4 wqe = texture(ch0, q / R);
+   vec4 wqe = textureLod(ch0, q / R, 0.5);
  }
 ";
 
     let b = "fn main()  {
 	var wqe: vec4<f32> = textureLoad(BUFFER_ch0, vec2<i32>(q));
-	let wqe: vec4<f32> = textureLoad_CONVERT_TO_i32(BUFFER_ch0, vec2<i32>(q / R));
+	var wqe: vec4<f32> = sample_texture(BUFFER_ch0, q / R);
+	let wqe: vec4<f32> = textureSampleLevel(BUFFER_ch0, buffer_sampler, q / R, f32(0.5));
 } 
 
 ";

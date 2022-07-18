@@ -845,3 +845,36 @@ TranslationUnit(NonEmpty([
                             ) 
                         }, 
                         tail: [] })))] } })]))
+
+// ARRAY
+TranslationUnit(
+    NonEmpty([
+        FunctionDefinition(
+            FunctionDefinition { 
+                prototype: FunctionPrototype { 
+                    ty: FullySpecifiedType { 
+                        qualifier: None, 
+                        ty: TypeSpecifier { 
+                            ty: TypeName(TypeName("fn")), array_specifier: None } 
+                    }, 
+                    name: Identifier("main"), 
+                    parameters: [] 
+                }, 
+                statement: CompoundStatement { 
+                    statement_list: [
+                        Simple(Declaration(InitDeclaratorList(InitDeclaratorList { 
+                            head: SingleDeclaration { 
+                                ty: FullySpecifiedType { 
+                                    qualifier: None, 
+                                    ty: TypeSpecifier { 
+                                        ty: TypeName(TypeName("f32")), 
+                                        array_specifier: Some(ArraySpecifier { 
+                                            dimensions: NonEmpty([ExplicitlySized(IntConst(5))]) }) } 
+                                }, 
+                                name: Some(Identifier("a")), 
+                                array_specifier: None, 
+                                initializer: 
+                                    Some(Simple(Bracket(Variable(Identifier("b")), 
+                                    ArraySpecifier { dimensions: NonEmpty([ExplicitlySized(IntConst(3))]) }))) 
+                            }, 
+                            tail: [] })))] } })]))

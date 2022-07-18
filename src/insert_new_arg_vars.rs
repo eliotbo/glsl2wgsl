@@ -47,20 +47,32 @@ pub fn search_for_full_identifier<'a, 'b>(
             anychar,
             verify(preceded(is_not(ALPHANUM_UNDER), identifier), |x: &str| {
                 x == s
-            }),
+            })
+            .and(alt((
+                tag(" = "),
+                tag(" += "),
+                tag(" -= "),
+                tag(" *= "),
+                tag(" /= "),
+                tag(" %= "),
+            ))),
         ))(i)?;
 
         if let (rest, Some((_, _name))) = x {
-            let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
-            let rest_of_line = rest_of_line.iter().collect::<String>();
-
-            let y: ParserResult<Option<(Vec<char>, &str)>> =
-                opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
-
-            if let Ok((_, Some(_))) = y {
-                return success(true)(rest2);
-            }
+            return success(true)(rest);
         }
+
+        // if let (rest, Some((_, _name))) = x {
+        //     let (rest2, (rest_of_line, _)) = many_till(anychar, eol)(rest)?;
+        //     let rest_of_line = rest_of_line.iter().collect::<String>();
+
+        //     let y: ParserResult<Option<(Vec<char>, &str)>> =
+        //         opt(many_till(anychar, tag(" = ")))(rest_of_line.as_str());
+
+        //     if let Ok((_, Some(_))) = y {
+        //         return success(true)(rest2);
+        //     }
+        // }
 
         return success(false)(i);
     }
