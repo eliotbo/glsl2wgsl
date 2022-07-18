@@ -59,8 +59,11 @@ extern "C" {
 #[wasm_bindgen]
 pub fn greet(_v: &str) {}
 
-pub fn preprocessing(i: &str) -> ParserResult<String> {
+pub fn preprocessing(i: &str) -> ParserResult<(String, u32)> {
     let mut buf = "".to_string();
+
+    // #[allow(dead_code)]
+    let number_of_define_lines: u32;
 
     if let Ok((_rest, replaced_defs)) = defs_parser(i) {
         buf = replaced_defs;
@@ -90,8 +93,9 @@ pub fn preprocessing(i: &str) -> ParserResult<String> {
     }
 
     // need help simplifying this.
-    if let Ok((_rest, replaced_defines_func)) = func_definition_parser(&buf) {
+    if let Ok((_rest, (replaced_defines_func, num_defines))) = func_definition_parser(&buf) {
         buf = replaced_defines_func;
+        number_of_define_lines = num_defines;
     } else {
         let vek = VerboseErrorKind::Context("Could not properly remove comments");
         let _ve = VerboseError {
@@ -101,7 +105,7 @@ pub fn preprocessing(i: &str) -> ParserResult<String> {
     }
 
     if let Ok((_rest2, replaced_defines)) = definition_parser(&buf) {
-        return success(replaced_defines)("");
+        return success((replaced_defines, number_of_define_lines))("");
     } else {
         let vek = VerboseErrorKind::Context("Could not properly parse the #define functions");
         let _ve = VerboseError {
@@ -184,7 +188,7 @@ pub fn postprocessing(i: &str) -> String {
 
 #[wasm_bindgen]
 pub fn do_parse(x: String) -> String {
-    if let Ok((_rest, replaced_defines)) = preprocessing(&x) {
+    if let Ok((_rest, (replaced_defines, number_of_define_lines))) = preprocessing(&x) {
         let trans = syntax::TranslationUnit::parse(Span::new(&replaced_defines));
         // println!("{:?}", trans);
         match trans {
@@ -205,6 +209,10 @@ pub fn do_parse(x: String) -> String {
                 }
                 .to_string();
 
+                // let line_num_without_defines = line1.parse::<usize>().unwrap();
+                // let line_num_including_defines =
+                //     (line_num_without_defines + number_of_define_lines).to_string();
+
                 let mut count = 0;
                 let mut s = "".to_string();
                 for c in buggy_line.chars() {
@@ -215,8 +223,9 @@ pub fn do_parse(x: String) -> String {
                     }
                     s.push(c);
                 }
+                // println!("{}", number_of_define_lines);
                 let mut intro = format!("There seems to be a syntax error in the input GLSL code: \nline: {:?}, column: {:?}, \nbuggy line:",
-            span.location_line(), span.get_column(), ).to_string();
+            span.location_line() + number_of_define_lines, span.get_column(), ).to_string();
                 intro.push_str(&s);
                 /////////////// end formatting error message //////////////////////////////////////
 

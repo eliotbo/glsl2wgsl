@@ -4,10 +4,10 @@
 use crate::nom_helpers::*;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
-use nom::character::complete::{anychar, none_of, space0, space1};
-use nom::combinator::{eof, map, recognize, success, verify};
-use nom::multi::{count, many0, many_till};
-use nom::sequence::{pair, preceded, tuple};
+use nom::character::complete::{anychar, space0, space1};
+use nom::combinator::{map, success};
+use nom::multi::{many0, many_till};
+use nom::sequence::tuple;
 use nom::Parser;
 
 fn get_one_define(i: &str) -> ParserResult<String> {

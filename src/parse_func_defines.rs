@@ -178,7 +178,30 @@ pub fn find_and_replace_define_funcs(i: &str, defs: Vec<DefineFunc>) -> ParserRe
     success(full_script)("")
 }
 
-pub fn func_definition_parser(i: &str) -> ParserResult<String> {
+// counts the number of #defines instances in the script
+pub fn count_defines(i: &str) -> ParserResult<usize> {
+    map(
+        many_till(
+            many_till(
+                anychar,
+                alt((
+                    verify(anychar_underscore_hashtag, |x: &str| x == "#define"),
+                    map(eof, |x: &str| x.to_string()),
+                )),
+            ),
+            eof,
+        ),
+        |x| {
+            //
+            // println!("{:?}", x.0.len());
+            x.0.len() - 1
+        },
+    )(i)
+}
+
+pub fn func_definition_parser(i: &str) -> ParserResult<(String, u32)> {
+    let (_, number_of_defines) = count_defines(i)?;
+
     let (_rest, define_funcs) = get_all_define_funcs(i)?;
 
     let (_, no_defines) = erase_all_func_defines(i)?;
@@ -186,10 +209,10 @@ pub fn func_definition_parser(i: &str) -> ParserResult<String> {
     // println!("no_defines : {:?}", define_funcs);
 
     if let Ok((_rest, so_far)) = find_and_replace_define_funcs(&no_defines, define_funcs) {
-        return success(so_far)("");
+        return success((so_far, number_of_defines as u32))("");
     }
 
-    success("".to_string())("")
+    success(("".to_string(), 0))("")
 }
 
 // // pub fn remove_comments(i: &str) -> ParserResult<String> {

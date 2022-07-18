@@ -1,4 +1,6 @@
-fn main() -> fn {
-	let a: array<f32,5> = b[3];
+fn main()  {
+	textureLoad(BUFFER_ch0(i), vec2<i32>(Bi(f(a))));
+	textureLoad(BUFFER_ch4(i), vec2<i32>(Bi(st(a))));
+	gold = 12 + bobbyFisher(15, GR);
 } 
 

@@ -32,22 +32,28 @@ use std::fs;
 
 // TODO: fix the newline for statements
 
-// 3: take all lines into account when reporting the line number in errors
-
-// 7.  n  = n + 1n
-
-const CALLED_ARRAY: &str = "fn main() {  f32 a[5] = b[3]; }";
+const DEFINES_FUNC: &str = "
+#define texel(ax, p) texelFetch(ax(i), Bi(p(a)), ax(i))
+#define q 12
+#define t(pk, l) bobbyFisher(15, pk)
+#define qw bobbyFisher(15, pk)
+void main() {
+   texel(ch0, f);
+   texel(ch4, st);
+   gold = q + t(GR, big);
+ }
+";
 
 fn main() {
     // // To print the abstract syntax tree, uncomment the following line
-    let trans = TranslationUnit::parse(Span::new(&CALLED_ARRAY)).unwrap();
+    // let trans = TranslationUnit::parse(Span::new(&RANGE)).unwrap();
 
-    let buf = do_parse(CALLED_ARRAY.to_string());
+    let buf = do_parse(DEFINES_FUNC.to_string());
     // let buf = ifdefs_parser(DEFINES_FUNC).unwrap().1;
 
     fs::write("./parsed_file.txt", &buf).expect("Unable to write file");
 
-    println!("{:?}", trans);
+    // println!("{:?}", trans);
     // println!("{:?}", buf);
 }
 

@@ -139,7 +139,10 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
             anychar,
             pair(tag("fn "), identifier).and(function_call_args_anychar2),
         )),
-        |(before_func, ((fn_tag, func_name), args)): (Vec<char>, ((&str, &str), Vec<String>))| {
+        |(_before_func, ((_fn_tag, _func_name), args)): (
+            Vec<char>,
+            ((&str, &str), Vec<String>),
+        )| {
             //
             // println!("args: {:?}", args);
 
@@ -168,7 +171,7 @@ pub fn check_one_func(i: &str) -> ParserResult<String> {
     //     return Ok(("", i.to_string()));
     // }
 
-    let (rest, function_decl) = recognize(many_till(
+    let (_rest, _function_decl) = recognize(many_till(
         anychar,
         pair(tag("fn "), identifier).and(function_call_args_anychar2),
     ))(i)?;
